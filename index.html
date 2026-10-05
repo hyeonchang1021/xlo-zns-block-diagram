@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="XLO-ZNS 시스템 블록도. 블록이나 흐름을 누르면 역할, 동작, 식, 핵심 수치를 보여줍니다.">
+<style>:root{color-scheme:light}html{-webkit-text-size-adjust:100%}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>XLO-ZNS 시스템 블록도</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+/* Layout: schematic on the left stays in view; the selected part's reference sheet reads on the right. Stacks to one column when narrow. */
+:root {
+  --bg: #EDF0F3;
+  --surface: #FAFBFC;
+  --ext: #FFFFFF;
+  --note: #E2E7EC;
+  --ink: #16202A;
+  --ink-2: #465463;
+  --ink-3: #7C8996;
+  --line: #C9D1D9;
+  --decide: #3A43B0;
+  --decide-tint: #E3E5F7;
+  --state: #0A6F64;
+  --state-tint: #D9EEEA;
+  --focus: #B4530A;
+  --sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1318; --surface: #151B22; --ext: #1C242D; --note: #1A222B;
+    --ink: #E4EAF0; --ink-2: #A7B3BF; --ink-3: #6F7C89; --line: #2B3541;
+    --decide: #A7ADFF; --decide-tint: #21264F;
+    --state: #62CFC0; --state-tint: #0F3632;
+    --focus: #F2A65A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1318; --surface: #151B22; --ext: #1C242D; --note: #1A222B;
+  --ink: #E4EAF0; --ink-2: #A7B3BF; --ink-3: #6F7C89; --line: #2B3541;
+  --decide: #A7ADFF; --decide-tint: #21264F;
+  --state: #62CFC0; --state-tint: #0F3632;
+  --focus: #F2A65A;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.7;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+sub, sup { line-height: 0; font-size: 0.72em; }
+button { font: inherit; color: inherit; }
+
+.page {
+  max-width: 1180px;
+  margin-inline: auto;
+  padding-inline: 20px;
+  padding-block: 28px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.masthead { display: flex; flex-direction: column; gap: 6px; }
+.eyebrow {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+}
+h1 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+.hint { margin: 0; color: var(--ink-2); max-width: 60ch; }
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 36px;
+  align-items: start;
+}
+.fig {
+  position: sticky;
+  top: calc(env(safe-area-inset-top, 0px) + 16px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.fig-scroll {
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.fig-scroll svg { display: block; width: 100%; min-width: 560px; height: auto; }
+
+.legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+.legend li { display: flex; align-items: center; gap: 7px; }
+.sw { width: 12px; height: 12px; border-radius: 2px; border: 1px solid var(--ink-3); background: var(--ext); flex: none; }
+.sw-decide { background: var(--decide-tint); border-color: var(--decide); }
+.sw-state { background: var(--state-tint); border-color: var(--state); }
+.sw-dash { width: 22px; height: 0; border: 0; border-top: 1.5px dashed var(--ink-3); border-radius: 0; background: none; }
+
+.chips { display: none; flex-wrap: wrap; gap: 6px; }
+.chip {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.chip:hover { border-color: var(--ink-3); }
+.chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.chip:focus-visible, .rel button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* schematic */
+svg text { font-family: var(--sans); }
+.hit { cursor: pointer; outline: none; }
+.blk rect { fill: var(--ext); stroke: var(--ink-3); stroke-width: 1; }
+.blk .t1 { font-size: 14px; font-weight: 600; fill: var(--ink); }
+.blk .t2 { font-size: 12px; fill: var(--ink-2); }
+.blk.k-decide rect { fill: var(--decide-tint); stroke: var(--decide); }
+.blk.k-state rect { fill: var(--state-tint); stroke: var(--state); }
+.blk:hover rect { stroke-width: 2; }
+.blk.is-on rect { fill: var(--ink); stroke: var(--ink); }
+.blk.k-decide.is-on rect { fill: var(--decide); stroke: var(--decide); }
+.blk.k-state.is-on rect { fill: var(--state); stroke: var(--state); }
+.blk.is-on .t1, .blk.is-on .t2 { fill: var(--bg); }
+
+.pill rect { fill: var(--surface); stroke: var(--line); stroke-width: 1; }
+.pill text { font-family: var(--mono); font-size: 11px; fill: var(--ink-2); }
+.pill.orch text { font-family: var(--sans); font-size: 13px; font-weight: 600; fill: var(--ink); }
+.pill:hover rect { stroke: var(--ink-3); }
+.pill.is-on rect { fill: var(--ink); stroke: var(--ink); }
+.pill.is-on text { fill: var(--bg); }
+.hit:focus-visible rect { stroke: var(--focus); stroke-width: 3; }
+
+.orch-box { fill: none; stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 6 4; }
+.orch-box.is-on { stroke: var(--ink); stroke-width: 1.75; }
+.edge { fill: none; stroke: var(--ink-3); stroke-width: 1.25; marker-end: url(#ah); }
+.edge.dash { stroke-dasharray: 4 3; }
+.edge.is-rel { stroke: var(--ink); stroke-width: 2; marker-end: url(#ah-on); }
+.ah { fill: var(--ink-3); }
+.ah-on { fill: var(--ink); }
+
+/* reference sheet */
+.panel { min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.cat {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: var(--note);
+  color: var(--ink-2);
+}
+.cat-decide { background: var(--decide-tint); color: var(--decide); }
+.cat-state { background: var(--state-tint); color: var(--state); }
+.ref { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+.panel h2 { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.3; }
+.head { display: flex; flex-direction: column; gap: 8px; }
+.lead { margin: 0; font-size: 15.5px; color: var(--ink); max-width: 62ch; }
+.sec { display: flex; flex-direction: column; gap: 8px; }
+.panel h3 {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+.steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 6px; max-width: 62ch; }
+.steps li { padding-left: 2px; }
+.steps li::marker { color: var(--ink-3); font-family: var(--mono); font-size: 0.9em; }
+.more { margin: 0; color: var(--ink-2); max-width: 62ch; }
+.cap { margin: 0; font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+
+.chain { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-family: var(--mono); font-size: 12.5px; }
+.chain .st { border: 1px solid var(--ink-3); border-radius: 3px; padding: 1px 7px; background: var(--surface); }
+.chain .op { color: var(--ink-3); }
+
+.eqs { display: flex; flex-direction: column; gap: 6px; }
+.eq {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.9;
+  white-space: nowrap;
+  overflow-x: auto;
+  padding: 6px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.nums { margin: 0; display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.nums > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 2px 16px;
+  padding-block: 7px;
+  border-bottom: 1px solid var(--line);
+}
+.nums dt { color: var(--ink-2); font-size: 14px; }
+.nums dd {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.tag { margin-left: 10px; color: var(--ink-3); font-size: 12px; }
+
+.note { background: var(--note); border-radius: 4px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.note p { margin: 0; color: var(--ink-2); font-size: 14px; }
+.rel { display: flex; flex-wrap: wrap; gap: 6px; }
+.rel button {
+  border: 1px solid var(--line);
+  background: none;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.rel button:hover { border-color: var(--ink-3); background: var(--surface); }
+
+.foot { margin: 0; padding-top: 14px; border-top: 1px solid var(--line); color: var(--ink-3); font-size: 12.5px; max-width: 80ch; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .fig { position: static; }
+  .chips { display: flex; }
+  h1 { font-size: 22px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .blk rect, .pill rect, .edge, .chip { transition: fill .12s, stroke .12s, background-color .12s; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="masthead">
+    <p class="eyebrow">XLO-ZNS · Encryption-Aware Zone Placement for Zoned Namespace SSDs</p>
+    <h1>XLO-ZNS 시스템 블록도</h1>
+    <p class="hint">블록이나 흐름 이름을 누르면 그 부분의 역할, 동작, 수치가 나옵니다.</p>
+  </header>
+
+  <main class="layout">
+    <section class="fig" aria-label="블록도">
+      <div class="fig-scroll">
+        <svg viewBox="0 16 680 492" role="group" aria-label="XLO-ZNS 블록도. 블록을 선택하면 설명이 바뀝니다.">
+          <defs>
+            <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0 1L10 5L0 9z"/></marker>
+            <marker id="ah-on" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path class="ah-on" d="M0 1L10 5L0 9z"/></marker>
+          </defs>
+
+          <rect class="orch-box" id="orchBox" x="40" y="126" width="600" height="270" rx="10"/>
+
+          <line class="edge" data-parts="app place" x1="145" y1="86" x2="145" y2="169"/>
+          <line class="edge" data-parts="place budget" x1="230" y1="198" x2="254" y2="198"/>
+          <line class="edge" data-parts="budget smt" x1="425" y1="198" x2="449" y2="198"/>
+          <path class="edge" data-parts="smt ssd f-append" d="M535 226V464H481"/>
+          <line class="edge" data-parts="dtmc reclaim" x1="255" y1="328" x2="231" y2="328"/>
+          <line class="edge" data-parts="reclaim place f-reloc" x1="145" y1="300" x2="145" y2="227"/>
+          <path class="edge" data-parts="reclaim ssd f-reset" d="M145 356V464H259"/>
+          <line class="edge dash" data-parts="ssd dtmc f-tel" x1="340" y1="436" x2="340" y2="357"/>
+          <path class="edge dash" data-parts="ssd budget f-tel" d="M438 436V262H380V227"/>
+
+          <g class="hit pill orch" data-id="orch" role="button" tabindex="0" aria-label="XLO-ZNS orchestrator">
+            <rect x="413" y="137" width="215" height="24" rx="4"/>
+            <text x="520.5" y="149" text-anchor="middle" dominant-baseline="central">XLO-ZNS orchestrator (host)</text>
+          </g>
+
+          <g class="hit blk" data-id="app" role="button" tabindex="0" aria-label="Application">
+            <rect x="60" y="30" width="170" height="56" rx="6"/>
+            <text class="t1" x="145" y="48" text-anchor="middle" dominant-baseline="central">Application</text>
+            <text class="t2" x="145" y="68" text-anchor="middle" dominant-baseline="central">Batches (length, class)</text>
+          </g>
+          <g class="hit blk k-decide" data-id="place" role="button" tabindex="0" aria-label="Placement">
+            <rect x="60" y="170" width="170" height="56" rx="6"/>
+            <text class="t1" x="145" y="188" text-anchor="middle" dominant-baseline="central">Placement</text>
+            <text class="t2" x="145" y="208" text-anchor="middle" dominant-baseline="central">Class-aware packing</text>
+          </g>
+          <g class="hit blk k-decide" data-id="budget" role="button" tabindex="0" aria-label="Bk safe budget">
+            <rect x="255" y="170" width="170" height="56" rx="6"/>
+            <text class="t1" x="340" y="188" text-anchor="middle" dominant-baseline="central">B<tspan dy="3" font-size="10">k</tspan><tspan dy="-3"> safe budget</tspan></text>
+            <text class="t2" x="340" y="208" text-anchor="middle" dominant-baseline="central">P-K tail bound, Eq. 9</text>
+          </g>
+          <g class="hit blk k-decide" data-id="smt" role="button" tabindex="0" aria-label="SMT check">
+            <rect x="450" y="170" width="170" height="56" rx="6" stroke-dasharray="5 3"/>
+            <text class="t1" x="535" y="188" text-anchor="middle" dominant-baseline="central">SMT check</text>
+            <text class="t2" x="535" y="208" text-anchor="middle" dominant-baseline="central">ZNS 1.2 invariants</text>
+          </g>
+          <g class="hit blk k-state" data-id="reclaim" role="button" tabindex="0" aria-label="Reclaim">
+            <rect x="60" y="300" width="170" height="56" rx="6"/>
+            <text class="t1" x="145" y="318" text-anchor="middle" dominant-baseline="central">Reclaim</text>
+            <text class="t2" x="145" y="338" text-anchor="middle" dominant-baseline="central">Same for all policies</text>
+          </g>
+          <g class="hit blk k-state" data-id="dtmc" role="button" tabindex="0" aria-label="Zone-state DTMC">
+            <rect x="255" y="300" width="170" height="56" rx="6"/>
+            <text class="t1" x="340" y="318" text-anchor="middle" dominant-baseline="central">Zone-state DTMC</text>
+            <text class="t2" x="340" y="338" text-anchor="middle" dominant-baseline="central">Gates reset deferral</text>
+          </g>
+          <g class="hit blk" data-id="ssd" role="button" tabindex="0" aria-label="ZNS SSD">
+            <rect x="260" y="436" width="220" height="56" rx="6"/>
+            <text class="t1" x="370" y="454" text-anchor="middle" dominant-baseline="central">ZNS SSD</text>
+            <text class="t2" x="370" y="474" text-anchor="middle" dominant-baseline="central">Zones, MOR/MAR, AES-XTS</text>
+          </g>
+
+          <g class="hit pill" data-id="f-reloc" role="button" tabindex="0" aria-label="Relocation writes 흐름">
+            <rect x="154" y="251" width="128" height="22" rx="4"/>
+            <text x="218" y="262" text-anchor="middle" dominant-baseline="central">Relocation writes</text>
+          </g>
+          <g class="hit pill" data-id="f-reset" role="button" tabindex="0" aria-label="Zone resets 흐름">
+            <rect x="154" y="408" width="89" height="22" rx="4"/>
+            <text x="198.5" y="419" text-anchor="middle" dominant-baseline="central">Zone resets</text>
+          </g>
+          <g class="hit pill" data-id="f-tel" role="button" tabindex="0" aria-label="Telemetry 흐름">
+            <rect x="351" y="405" width="76" height="22" rx="4"/>
+            <text x="389" y="416" text-anchor="middle" dominant-baseline="central">Telemetry</text>
+          </g>
+          <g class="hit pill" data-id="f-append" role="button" tabindex="0" aria-label="Zone appends 흐름">
+            <rect x="544" y="408" width="96" height="22" rx="4"/>
+            <text x="592" y="419" text-anchor="middle" dominant-baseline="central">Zone appends</text>
+          </g>
+        </svg>
+      </div>
+      <ul class="legend">
+        <li><span class="sw sw-decide"></span>Decision path</li>
+        <li><span class="sw sw-state"></span>Scheduler state</li>
+        <li><span class="sw"></span>외부 (워크로드, 장치)</li>
+        <li><span class="sw sw-dash"></span>점선: 배치별 결정 경로 밖</li>
+      </ul>
+      <div class="chips" id="chips" role="group" aria-label="파트 선택"></div>
+    </section>
+
+    <article class="panel" id="panel" aria-live="polite"></article>
+  </main>
+
+  <p class="foot">수치는 논문 최종본의 Table 1–4와 본문에서 가져왔습니다. 비교 수치는 운영점(offered load 0.30)에서 seed 8개의 평균이고, 모두 시뮬레이터 값이라 실제 장치의 절대 지연으로 인용할 수 없습니다.</p>
+</div>
+
+<script>
+(function () {
+  var Bk = 'B<sub>k</sub>';
+  var Bsafe = 'B<sub>k</sub><sup>safe</sup>';
+  var tsw = 'τ<sub>sw</sub>';
+  var sS = 'σ<sub>S</sub><sup>2</sup>';
+  var Nz = 'N<sub>z</sub>';
+
+  var P = {
+    orch: {
+      name: 'XLO-ZNS orchestrator', label: 'Orchestrator', kind: 'ext', cat: '호스트 제어 루프', ref: '§3 · Fig. 1',
+      lead: '호스트에서 2 ms epoch마다 도는 제어 루프입니다. ZNS는 장치가 배치와 회수를 맡지 않으므로, 어느 존에 쓰고 언제 reset할지를 이 루프가 모두 정합니다.',
+      stepsTitle: '한 epoch의 순서', ordered: true,
+      steps: [
+        '텔레메트리로 DTMC와 서비스 시간 통계를 갱신합니다.',
+        'Free pool이 낮고 예측기가 허용하면 존 하나를 회수합니다.',
+        'Open 존 집합을 MOR까지 다시 채웁니다.',
+        '도착한 배치마다 목적지 존을 고릅니다.',
+        '만들어진 명령 시퀀스를 SMT checker로 검사합니다. 평가에서는 이 단계를 결정 경로 밖에서 따로 쟀습니다.',
+        '명령을 장치에 보냅니다.'
+      ],
+      nums: [
+        ['Epoch 길이', '2 ms'],
+        ['시뮬레이터', 'Python 약 900줄'],
+        ['Admission checker', '약 530줄, Z3'],
+        ['반복', 'seed 8개, 95% 신뢰구간'],
+        ['측정 구간', 'warm-up 16 s 뒤 24 s']
+      ],
+      note: '비교 대상인 Base-ZNS, Secure-Naive, XLO-ZNS는 open 존 보충 규칙과 회수 규칙을 똑같이 씁니다. 존 수명주기를 고정해야 배치 규칙의 효과만 따로 볼 수 있기 때문입니다.',
+      rel: ['place', 'budget', 'smt', 'reclaim', 'dtmc']
+    },
+    app: {
+      name: 'Application', kind: 'ext', cat: '외부 입력', ref: '§3 · §8.1',
+      lead: '쓰기 요청을 배치 b = (ℓ, c)로 내보내는 워크로드입니다. ℓ은 배치 길이, c는 기밀 등급(confidentiality class)입니다.',
+      stepsTitle: '워크로드 구성',
+      steps: [
+        '배치 길이는 32–512 KiB 구간에서 log-uniform으로 뽑습니다.',
+        '등급은 8개이고 Zipf 분포(지수 1.1)를 따릅니다.',
+        '등급마다 암호화 키가 하나 있고, 그 키로 24 MiB를 쓸 때마다 키를 교체합니다. 등급과 현재 키 epoch의 조합이 key domain입니다.',
+        '배치가 도착하면 같은 양의 기존 데이터가 무효화됩니다. 85% 확률로 자기 등급 데이터가 죽고, 나머지는 등급별 overwrite 강도에 비례해 고릅니다.',
+        'Overwrite 강도는 가장 뜨거운 등급에서 가장 차가운 등급까지 비율 12의 등비로 줄어듭니다.'
+      ],
+      nums: [
+        ['배치 길이', '32–512 KiB'],
+        ['기밀 등급', '8개, Zipf 1.1'],
+        ['키 교체 간격', '24 MiB'],
+        ['Live 점유율', 'raw 용량의 72%'],
+        ['운영점', 'offered load 0.30']
+      ],
+      note: '키 교체 간격은 존 용량 64 MiB의 배수가 되지 않게 잡았습니다. 배수이면 교체가 항상 존 경계에 떨어져 존 내부의 키 경계 효과가 사라집니다. 등급과 데이터 수명의 상관은 워크로드를 그렇게 만든 결과이고, WA 결과가 여기에 기대고 있습니다(§9).'
+    },
+    place: {
+      name: 'Placement', kind: 'decide', cat: 'Decision path', ref: '§6.3',
+      lead: '배치가 들어갈 open 존을 고르는 규칙입니다. 키 경계 수 ' + Bk + '를 줄이는 것은 이 블록이고, ablation에서 이 규칙만 빼면 모든 지표가 Secure-Naive 값으로 돌아갑니다.',
+      stepsTitle: '존 선택 우선순위', ordered: true,
+      steps: [
+        '배치와 같은 key domain에 이미 묶인 존. 경계 0.',
+        '아직 어느 domain에도 묶이지 않은 존. 배치가 이 존을 차지합니다. 경계 0.',
+        '같은 등급이지만 이전 키 epoch에 묶인 존. 경계 1이고 등급 지역성은 유지됩니다.',
+        '셋 다 없으면 가장 덜 찬 존. 암호화를 모르는 스케줄러와 같은 선택입니다.'
+      ],
+      more: ['유발된 ' + Bk + '가 ' + Bsafe + '를 넘으면 경계가 없는 존으로 다시 배치합니다. 그런 존이 없으면 위반을 숨기지 않고 기록합니다.'],
+      cmp: true,
+      nums: [
+        [Bk + ' / batch', '0.7966 → 0.0038', '210배 감소'],
+        ['Append 경로 이용률', '0.294 → 0.275', '−6.5%'],
+        ['장치 이용률', '0.738 → 0.679', '−8.0%'],
+        ['Write amplification', '2.451 → 2.375', '−3.1%'],
+        ['평균 append 지연', '0.79 → 0.67 ms', '−15%'],
+        ['P99 append 지연', '3.58 → 3.60 ms', '차이 없음'],
+        ['P99.9 append 지연', '4.62 → 5.37 ms', '악화']
+      ],
+      note: '배치 규칙은 존을 따로 열지 않고, 열려 있는 존 중에서만 고릅니다. 초기 버전은 등급마다 존을 열었다가 용량이 묶여 WA가 절감분보다 더 늘었습니다. 그래도 존이 차는 순서는 바뀌므로 compaction에 영향이 남고, 이 워크로드에서는 그 영향이 WA를 낮추는 쪽이었습니다.'
+    },
+    budget: {
+      name: Bk + ' safe budget', label: 'Bk safe budget', kind: 'decide', cat: 'Decision path', ref: '§6.2 · Eq. 6–10',
+      lead: '지금의 도착률에서 tail 목표를 지키면서 받아들일 수 있는 키 경계 수의 상한입니다. Placement가 고른 존이 이 예산을 넘기면 다시 배치합니다.',
+      stepsTitle: '유도 순서', ordered: true,
+      steps: [
+        '서비스 시간을 S(' + Bk + ') = S<sub>0</sub> + ' + Bk + '·' + tsw + '로 둡니다. S<sub>0</sub>는 경계가 없을 때의 서비스 시간입니다.',
+        'M/G/1 이용률 조건 λ·E[S] ≤ 1 − ε에서 ' + Bk + '<sup>util</sup>을 얻습니다. 이 조건은 tail을 보지 못합니다.',
+        'Pollaczek–Khinchine 공식으로 평균 대기시간 E[W<sub>q</sub>] ≤ W*를 걸어 ' + Bk + '<sup>tail</sup>을 얻습니다. 서비스 시간 분산 ' + sS + '가 식에 남습니다.',
+        'P99 목표 L*는 heavy-traffic 근사로 W* = L* / ln 100으로 바꿉니다.',
+        '둘 중 작은 값의 내림이 예산입니다. λ와 ' + sS + '는 완료 타임스탬프에서 온라인으로 추정합니다.'
+      ],
+      eq: [
+        Bk + '<sup>util</sup> = ((1 − ε) − λS<sub>0</sub>) / (λ' + tsw + ')',
+        Bk + '<sup>tail</sup> = (√(W*<sup>2</sup> + 2W*/λ − ' + sS + ') − W* − S<sub>0</sub>) / ' + tsw,
+        Bsafe + ' = ⌊ min(' + Bk + '<sup>util</sup>, ' + Bk + '<sup>tail</sup>) ⌋'
+      ],
+      nums: [
+        ['안정 여유 ε', '0.10'],
+        ['Tail 목표 L*', '6 ms (P99)'],
+        [tsw, '8 µs', '2–32 µs 스윕'],
+        ['운영점 평균 예산', '17.3'],
+        ['실제 ' + Bk + ' / batch', '0.0038']
+      ],
+      note: '이 설정에서는 예산이 실질적으로 걸린 적이 없습니다. 예산을 빼도 모든 지표가 유효숫자 네 자리까지 같고, 논문은 이것을 null 결과로 그대로 보고합니다. 이 식은 지연 보장이 아니라, 부하가 높을 때 key domain이 잘게 쪼개지는 것을 막는 조절 장치로 읽어야 합니다(§9).'
+    },
+    smt: {
+      name: 'SMT check', kind: 'decide', cat: 'Decision path · 별도 측정', ref: '§5 · §8.6',
+      lead: '한 epoch의 명령 시퀀스(최대 H개)가 NVMe ZNS 1.2 상태기계를 어기지 않는지 Z3로 검사합니다. 계획을 찾지는 않고, 이미 만든 계획이 합법인지만 확인합니다.',
+      stepsTitle: '검사하는 불변식',
+      steps: [
+        'Semantic: append는 ZSE, ZSIO, ZSEO, ZSC에서만 합법입니다. Write pointer는 정확히 ℓ만큼 전진하고 존 용량을 넘지 못합니다. Reset은 ZSE가 아닌 상태에서 합법이고 포인터와 키 바인딩을 지웁니다.',
+        'Resource: 매 단계에서 open 존 수 ≤ MOR, active 존 수 ≤ MAR.',
+        'Security: append는 존의 key domain을 쓰는 등급으로 다시 묶고, epoch 안의 경계 수는 ' + Bsafe + ' 이하여야 합니다.',
+        'Expected write pointer: 계획할 때 본 포인터와 실제 포인터가 같아야 합니다. Reset이 사이에 끼어들어 쓰기가 offset 0에 조용히 떨어지는 경우를 잡습니다.'
+      ],
+      more: ['Scoped encoding은 계획이 건드리는 존 H개와 자원 카운터 2개만 기호로 둡니다. 식에 ' + Nz + '가 나오지 않으므로 비용이 장치 크기와 무관합니다. 불변식은 시작할 때 한 번만 만들고, epoch마다 관측 상태와 계획만 push하고 pop합니다.'],
+      nums: [
+        ['Scoped, H = 4 (P50)', '2.3–2.8 ms'],
+        ['Scoped, H = 16 (P50)', '59.1–60.4 ms'],
+        ['Full, H = 16, ' + Nz + ' = 32 (P50)', '313.9 ms'],
+        ['불변식 빌드 (1회)', '약 60 ms–1 s'],
+        ['주입 fault 탐지', '4종 모두 100%'],
+        ['잘못된 거부', '0 / 360']
+      ],
+      note: 'H = 4에서도 검사 한 번이 2 ms epoch보다 깁니다. 그래서 시뮬레이션의 결정 경로에는 넣지 않았고, 그림에서 점선 테두리로 그렸습니다. 8장의 지연 수치에는 이 비용이 들어 있지 않습니다. 벤치마크는 존 용량 64의 축소된 산술 도메인을 쓰므로, 절대 비용이 아니라 H와 ' + Nz + '에 대한 스케일링으로 읽어야 합니다.'
+    },
+    reclaim: {
+      name: 'Reclaim', kind: 'state', cat: 'Scheduler state', ref: '§7 · §8.2',
+      lead: '빈 존이 부족해지면 Full 존을 골라 비우는 호스트 측 compaction입니다. 장치가 GC를 하지 않으므로 write amplification은 전부 여기서 생깁니다.',
+      stepsTitle: '동작 순서', ordered: true,
+      steps: [
+        'Free pool이 ' + Nz + '/8(32개) 아래로 내려가면 재량으로 회수를 시작하고, ' + Nz + '/48(약 5개) 아래에서는 반드시 회수합니다.',
+        'Live 데이터가 가장 적은 Full 존을 victim으로 고릅니다.',
+        '살아남은 데이터를 256 KiB 일반 쓰기로 다시 내보냅니다. 원래 등급을 유지하고, Placement 규칙과 암호화 비용을 그대로 적용받습니다.',
+        '존을 reset합니다. 장치를 막는 명령은 reset뿐입니다.'
+      ],
+      more: ['WA는 장부 오류로 쉽게 왜곡됩니다. 그래서 목적지를 찾지 못한 copy-out 조각 수와 종료 시점에 대기 중인 재배치 물량을 실행마다 함께 보고합니다.'],
+      cmp: true,
+      nums: [
+        ['Write amplification', '2.451 → 2.375', '−3.1%'],
+        ['Zone reset 횟수', '482 → 468'],
+        ['Victim의 live 비율', '0.593 → 0.579'],
+        ['Reclaim 경로 이용률', '0.443 → 0.404', '−8.8%']
+      ],
+      note: '세 정책이 같은 규칙으로 회수하므로 Base-ZNS와 Secure-Naive의 WA와 reset 횟수는 완전히 같습니다. XLO-ZNS에서 값이 달라지는 것은 Placement가 존이 차는 순서를 바꾸기 때문입니다. 이 방향은 등급과 수명이 상관되도록 만든 워크로드에 기대고 있고, 그렇지 않은 배포에서는 뒤집힐 수 있습니다(§9).'
+    },
+    dtmc: {
+      name: 'Zone-state DTMC', kind: 'state', cat: 'Scheduler state', ref: '§4 · Eq. 1–3',
+      lead: '존 상태기계 위에 얹은 이산시간 Markov chain입니다. h epoch 뒤에 free pool이 바닥날지를 예측해서 재량 reset을 미뤄도 되는지 판단합니다. 배치에는 관여하지 않습니다.',
+      stepsTitle: '동작',
+      steps: [
+        '상태는 ZSE, ZSIO, ZSEO, ZSC, ZSF 다섯 개이고, 전이행렬 P에서 0이 아닌 칸은 규격의 전이표와 같습니다.',
+        '관측한 전이 횟수 n<sub>ij</sub>로 P̂를 EWMA 갱신합니다.',
+        'σ<sub>h</sub>는 h epoch 뒤 빈 존 수가 θ<sub>low</sub> 이하일 확률입니다. 빈 존 수를 Poisson-binomial로 보고 정규 근사와 연속성 보정으로 계산합니다.',
+        '장치 backlog가 4 ms를 넘고 σ<sub>h</sub> &lt; 1/2이면 재량 reset을 미룹니다. Low-water mark 아래에서는 예측과 상관없이 reset합니다.'
+      ],
+      eq: [
+        'P̂<sub>ij</sub>(t+1) = (1 − η)·P̂<sub>ij</sub>(t) + η·n<sub>ij</sub>(t) / (Σ<sub>k</sub> n<sub>ik</sub>(t) + ε)',
+        'σ<sub>h</sub> = Pr[ Σ<sub>z</sub> 1{X<sub>t+h</sub><sup>(z)</sup> = ZSE} ≤ θ<sub>low</sub> ]'
+      ],
+      nums: [
+        ['Horizon h', '4 epoch'],
+        ['EWMA 계수 η', '0.08'],
+        ['미룬 재량 reset 비율', '0.0204 ± 0.0260'],
+        ['P99, 게이트 있음 / 없음', '3.60 / 3.65 ms'],
+        ['계산 비용', 'O(|Z|<sup>3</sup>h + ' + Nz + ')']
+      ],
+      note: '처음에는 open 자원 압력 ρ<sub>h</sub>로 게이트했는데 한 번도 작동하지 않았습니다. Open 존을 매번 MOR까지 채우므로 open 수가 고정되고, 정책이 고정한 값은 예측해도 정보가 없기 때문입니다. ρ<sub>h</sub>는 진단용으로만 남겼습니다. σ<sub>h</sub>도 존 사이의 독립을 가정한 근사라서 1/2 임계 판단에만 쓰고 확률값으로 인용하지 않습니다. 운영점에서는 이 게이트가 거의 작동하지 않고 tail도 움직이지 않습니다.'
+    },
+    ssd: {
+      name: 'ZNS SSD', kind: 'ext', cat: '장치', ref: '§2.1 · §3 · §6.1 · §8.1',
+      lead: '호스트가 관리하는 ZNS 장치 모델입니다. 존은 순차로만 쓸 수 있고 reset으로만 재사용됩니다. 저장 데이터는 AES-XTS로 암호화됩니다.',
+      chain: true,
+      stepsTitle: '모델',
+      steps: [
+        'MOR은 open 상태(ZSIO, ZSEO) 존 수를, MAR은 active 상태(ZSIO, ZSEO, ZSC) 존 수를 제한합니다. 닫힌 존도 active 자원을 씁니다.',
+        '존은 write pointer, 상태, key domain 바인딩을 가집니다. 바인딩은 reset 뒤 첫 append가 정합니다.',
+        '다른 domain에 묶인 존에 append하면 키 경계가 하나 생깁니다. 그때마다 키 스케줄을 다시 읽는 비용 ' + tsw + '가 서비스 시간에 더해집니다.',
+        '이 설정에서는 open 존을 항상 MOR까지 채우고 존을 명시적으로 열거나 닫지 않습니다. 그래서 ZSEO와 ZSC는 생기지 않고 MAR은 걸리지 않습니다.'
+      ],
+      eq: ['T<sub>sec</sub>(ℓ, ' + Bk + ') = t<sub>0</sub> + ℓ/μ<sub>z</sub> + a<sub>0</sub> + c<sub>enc</sub>·⌈ℓ/u⌉ + ' + tsw + '·' + Bk],
+      nums: [
+        ['존 수 ' + Nz, '256'],
+        ['존 용량 C<sub>z</sub>', '64 MiB'],
+        ['MOR / MAR', '14 / 32'],
+        ['Append 대역폭', '3.0 GB/s'],
+        ['Reset 지연 τ<sub>r</sub>', '2.4 ms'],
+        ['XTS 단위 u', '4 KiB'],
+        ['c<sub>enc</sub>', '0.34 µs / unit'],
+        ['a<sub>0</sub>', '3 µs'],
+        [tsw, '8 µs'],
+        ['서비스 노이즈 σ<sub>c</sub><sup>2</sup>', '0.09']
+      ],
+      note: '모든 값은 시뮬레이터 설정이고 실제 장치에서 잰 값이 아닙니다. 특히 ' + tsw + '는 측정하지 못한 상수라서 2–32 µs 구간을 따로 스윕했습니다. 읽기, media error(ZSRO와 ZSO 상태), 채널별 crypto 병렬성은 모델에 없습니다.'
+    },
+    'f-append': {
+      name: 'Zone appends', kind: 'ext', cat: '흐름 · SMT check → ZNS SSD', ref: '§3 · §8.6',
+      lead: '한 epoch의 마지막 단계에서 명령 시퀀스가 장치로 나가는 경로입니다.',
+      stepsTitle: '동작',
+      steps: [
+        'Orchestrator는 Zone Append를 보냅니다. Offset을 장치가 정하므로, reset이 끼어들어 쓰기가 엉뚱한 offset에 떨어지는 race가 구조적으로 생기지 않습니다.',
+        'Expected write pointer 불변식은 offset을 직접 지정하는 plain Write를 쓰는 호스트를 위한 것입니다.',
+        'Append 서비스 시간에는 키 경계마다 ' + tsw + '가 더해집니다.'
+      ],
+      cmp: true,
+      nums: [
+        ['Append 경로 이용률', '0.294 → 0.275', '−6.5%'],
+        ['P50 append 지연', '0.47 → 0.38 ms', '−19%']
+      ],
+      note: '장치가 offset을 정하는 동작 자체는 데이터 경로 모델에 넣지 않았습니다(§9).'
+    },
+    'f-reloc': {
+      name: 'Relocation writes', kind: 'ext', cat: '흐름 · Reclaim → Placement', ref: '§7',
+      lead: 'Victim 존에서 살아남은 데이터를 다시 쓰는 경로입니다. 애플리케이션 쓰기와 같은 Placement를 거칩니다.',
+      stepsTitle: '동작',
+      steps: [
+        '256 KiB 단위의 일반 쓰기로 나갑니다. 원래 기밀 등급을 유지합니다.',
+        '암호화 비용과 키 경계 비용을 애플리케이션 쓰기와 똑같이 냅니다.',
+        '장치 쓰기량에 포함되어 write amplification으로 잡힙니다.'
+      ],
+      nums: [
+        ['재배치 쓰기 단위', '256 KiB'],
+        ['Reclaim 경로 이용률', '0.443 → 0.404', 'Naive → XLO'],
+        ['장치 작업 중 비중', '약 3/5', '0.404 / 0.679']
+      ],
+      note: '재배치를 한 덩어리 전송으로 모델링하면 절반쯤 찬 64 MiB 존 하나에 약 11 ms 동안 장치가 막히고, P99가 정책이 아니라 그 모델링 선택을 반영하게 됩니다. 재배치에 전용 배치 경로를 주면 Placement가 쓸 존을 compaction이 가져가고, 장치 쓰기의 큰 부분이 측정 대상에서 빠집니다. 그래서 일반 쓰기와 똑같이 취급합니다.'
+    },
+    'f-reset': {
+      name: 'Zone resets', kind: 'ext', cat: '흐름 · Reclaim → ZNS SSD', ref: '§4 · §7',
+      lead: 'Full 존을 Empty로 되돌리는 명령입니다. 존을 다시 쓰는 방법은 이것뿐입니다.',
+      stepsTitle: '동작',
+      steps: [
+        'ZSF → ZSE는 Full 상태에서 나가는 유일한 전이입니다. Write pointer가 0으로 돌아가고 키 바인딩이 사라집니다.',
+        '장치를 막는 명령은 reset뿐이고, 한 번에 τ<sub>r</sub> = 2.4 ms가 걸립니다.',
+        '재량 reset은 DTMC 게이트가 미룰 수 있습니다. Low-water mark 아래에서는 바로 보냅니다.'
+      ],
+      nums: [
+        ['Reset 지연 τ<sub>r</sub>', '2.4 ms'],
+        ['측정 구간의 reset 횟수', '482 → 468', 'Naive → XLO']
+      ],
+      note: '하한선 아래에서 미루지 않는 이유는, append 경로가 멈추는 것이 reset 비용을 지금 내는 것보다 나쁘기 때문입니다.'
+    },
+    'f-tel': {
+      name: 'Telemetry', kind: 'ext', cat: '흐름 · ZNS SSD → DTMC, ' + Bk + ' budget', ref: '§3 · §4 · §6.2',
+      lead: '장치에서 올라오는 관측값입니다. 매 epoch의 첫 단계에서 두 추정기를 갱신합니다. 배치별 결정 경로가 아니라서 점선으로 그렸습니다.',
+      stepsTitle: '어디로 가는가',
+      steps: [
+        '관측된 존 상태 전이 횟수 n<sub>ij</sub>는 DTMC의 P̂로 들어갑니다.',
+        '완료 타임스탬프에서 도착률 λ와 서비스 시간 분산 ' + sS + '를 추정해 ' + Bsafe + ' 계산에 씁니다.'
+      ],
+      nums: [
+        ['갱신 주기', 'epoch마다 (2 ms)'],
+        ['EWMA 계수 η', '0.08']
+      ],
+      note: '측정 구간 초반에는 λ와 ' + sS + ' 추정이 얇아서 ' + Bsafe + '가 0이나 1까지 내려가는 순간이 있습니다. XLO−class ablation에서 예산 초과가 실행당 평균 1.5건 기록된 것이 이때입니다.'
+    }
+  };
+
+  var ORDER = ['orch', 'app', 'place', 'budget', 'smt', 'reclaim', 'dtmc', 'ssd', 'f-reloc', 'f-reset', 'f-tel', 'f-append'];
+  var svg = document.querySelector('.fig-scroll svg');
+  var panel = document.getElementById('panel');
+  var chips = document.getElementById('chips');
+  var orchBox = document.getElementById('orchBox');
+  var hits = Array.prototype.slice.call(svg.querySelectorAll('.hit'));
+  var edges = Array.prototype.slice.call(svg.querySelectorAll('.edge'));
+  var current = null;
+
+  function labelOf(id) { return P[id].label || P[id].name; }
+
+  function related(id) {
+    if (P[id].rel) return P[id].rel;
+    var out = [];
+    edges.forEach(function (e) {
+      var parts = e.getAttribute('data-parts').split(' ');
+      if (parts.indexOf(id) === -1) return;
+      parts.forEach(function (p) { if (p !== id && out.indexOf(p) === -1) out.push(p); });
+    });
+    return ORDER.filter(function (p) { return out.indexOf(p) !== -1; });
+  }
+
+  function sheet(id) {
+    var p = P[id], h = '';
+    h += '<div class="head"><div class="meta"><span class="cat cat-' + p.kind + '">' + p.cat + '</span><span class="ref">' + p.ref + '</span></div>';
+    h += '<h2>' + p.name + '</h2><p class="lead">' + p.lead + '</p></div>';
+    if (p.chain) {
+      h += '<div class="sec"><h3>이 설정에서 존이 거치는 상태</h3><div class="chain">' +
+        '<span class="st">ZSE</span><span class="op">첫 append →</span>' +
+        '<span class="st">ZSIO</span><span class="op">가득 참 →</span>' +
+        '<span class="st">ZSF</span><span class="op">reset →</span>' +
+        '<span class="st">ZSE</span></div></div>';
+    }
+    if (p.steps) {
+      var tag = p.ordered ? 'ol' : 'ul';
+      h += '<div class="sec"><h3>' + p.stepsTitle + '</h3><' + tag + ' class="steps">' +
+        p.steps.map(function (s) { return '<li>' + s + '</li>'; }).join('') + '</' + tag + '>';
+      (p.more || []).forEach(function (m) { h += '<p class="more">' + m + '</p>'; });
+      h += '</div>';
+    }
+    if (p.eq) {
+      h += '<div class="sec"><h3>식</h3><div class="eqs">' +
+        p.eq.map(function (e) { return '<div class="eq" tabindex="0">' + e + '</div>'; }).join('') + '</div></div>';
+    }
+    if (p.nums) {
+      h += '<div class="sec"><h3>핵심 수치</h3>' +
+        (p.cmp ? '<p class="cap">Secure-Naive → XLO-ZNS, offered load 0.30</p>' : '') +
+        '<dl class="nums">' + p.nums.map(function (n) {
+          return '<div><dt>' + n[0] + '</dt><dd>' + n[1] + (n[2] ? '<span class="tag">' + n[2] + '</span>' : '') + '</dd></div>';
+        }).join('') + '</dl></div>';
+    }
+    if (p.note) h += '<div class="note"><h3>읽을 때 주의</h3><p>' + p.note + '</p></div>';
+    var rel = related(id);
+    if (rel.length) {
+      h += '<div class="sec"><h3>연결된 파트</h3><div class="rel">' +
+        rel.map(function (r) { return '<button type="button" data-go="' + r + '">' + labelOf(r) + '</button>'; }).join('') + '</div></div>';
+    }
+    return h;
+  }
+
+  function select(id, fromUser) {
+    if (!P[id]) return;
+    current = id;
+    hits.forEach(function (g) {
+      var on = g.getAttribute('data-id') === id;
+      g.classList.toggle('is-on', on);
+      g.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    orchBox.classList.toggle('is-on', id === 'orch');
+    edges.forEach(function (e) {
+      e.classList.toggle('is-rel', e.getAttribute('data-parts').split(' ').indexOf(id) !== -1);
+    });
+    Array.prototype.forEach.call(chips.children, function (c) {
+      c.setAttribute('aria-pressed', c.getAttribute('data-go') === id ? 'true' : 'false');
+    });
+    panel.innerHTML = sheet(id);
+    try { history.replaceState(null, '', '#' + id); } catch (e) {}
+    if (fromUser && window.matchMedia('(max-width: 900px)').matches) {
+      var calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      panel.scrollIntoView({ block: 'start', behavior: calm ? 'auto' : 'smooth' });
+    }
+  }
+
+  chips.innerHTML = ORDER.map(function (id) {
+    return '<button type="button" class="chip" id="chip-' + id + '" data-go="' + id + '" aria-pressed="false">' + labelOf(id) + '</button>';
+  }).join('');
+
+  hits.forEach(function (g) {
+    g.addEventListener('click', function () { select(g.getAttribute('data-id'), true); });
+    g.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); select(g.getAttribute('data-id'), true); }
+    });
+  });
+  chips.addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-go]');
+    if (b) select(b.getAttribute('data-go'), false);
+  });
+  panel.addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-go]');
+    if (b) select(b.getAttribute('data-go'), false);
+  });
+
+  var start = 'orch';
+  try { var h = (location.hash || '').slice(1); if (P[h]) start = h; } catch (e) {}
+  select(start, false);
+})();
+</script>
+</body>
+</html>
