@@ -1,0 +1,929 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="XLO-ZNS 결정 경로의 논리 회로도와 Verilog 구현, 시뮬레이션, 합성 결과.">
+<style>:root{color-scheme:light}html{-webkit-text-size-adjust:100%}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>XLO-ZNS 논리 회로도</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+/* Layout: hierarchical schematic. The top sheet spans the page; the selected module's sub-sheet, equations and signal list sit below it in two columns. */
+:root {
+  --bg: #EDF0F3;
+  --surface: #FAFBFC;
+  --ext: #FFFFFF;
+  --note: #E2E7EC;
+  --ink: #16202A;
+  --ink-2: #465463;
+  --ink-3: #7C8996;
+  --line: #C9D1D9;
+  --decide: #3A43B0;
+  --decide-tint: #E3E5F7;
+  --state: #0A6F64;
+  --state-tint: #D9EEEA;
+  --focus: #B4530A;
+  --sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1318; --surface: #151B22; --ext: #1C242D; --note: #1A222B;
+    --ink: #E4EAF0; --ink-2: #A7B3BF; --ink-3: #6F7C89; --line: #2B3541;
+    --decide: #A7ADFF; --decide-tint: #21264F;
+    --state: #62CFC0; --state-tint: #0F3632;
+    --focus: #F2A65A;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1318; --surface: #151B22; --ext: #1C242D; --note: #1A222B;
+  --ink: #E4EAF0; --ink-2: #A7B3BF; --ink-3: #6F7C89; --line: #2B3541;
+  --decide: #A7ADFF; --decide-tint: #21264F;
+  --state: #62CFC0; --state-tint: #0F3632;
+  --focus: #F2A65A;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.7;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+sub, sup { line-height: 0; font-size: 0.72em; }
+button { font: inherit; color: inherit; }
+
+.page {
+  max-width: 1220px;
+  margin-inline: auto;
+  padding-inline: 20px;
+  padding-block: 28px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.masthead { display: flex; flex-direction: column; gap: 6px; }
+.eyebrow { margin: 0; font-family: var(--mono); font-size: 12px; letter-spacing: 0.02em; color: var(--ink-3); }
+h1 { margin: 0; font-size: 26px; font-weight: 600; line-height: 1.3; text-wrap: balance; }
+.hint { margin: 0; color: var(--ink-2); max-width: 70ch; }
+.scope {
+  margin: 0;
+  padding: 10px 14px;
+  background: var(--note);
+  border-radius: 4px;
+  color: var(--ink-2);
+  font-size: 14px;
+  max-width: 92ch;
+}
+.scope b { color: var(--ink); font-weight: 600; }
+
+.block { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.sheet {
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.sheet svg { display: block; width: 100%; height: auto; }
+.sheet.top svg { min-width: 980px; }
+.sheet.sub svg { min-width: 560px; }
+
+.legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12.5px; color: var(--ink-2); }
+.legend li { display: flex; align-items: center; gap: 7px; }
+.sw { width: 12px; height: 12px; border-radius: 2px; border: 1px solid var(--ink-3); background: var(--ext); flex: none; }
+.sw-comb { background: var(--decide-tint); border-color: var(--decide); }
+.sw-seq { background: var(--state-tint); border-color: var(--state); }
+.sw-bus { width: 22px; height: 0; border: 0; border-top: 2.5px solid var(--ink-2); border-radius: 0; background: none; }
+.sw-dot { width: 7px; height: 7px; border-radius: 50%; border: 0; background: var(--ink-2); }
+.sw-bub { width: 8px; height: 8px; border-radius: 50%; border: 1.2px solid var(--ink-2); background: var(--surface); }
+.legend code { font-family: var(--mono); font-size: 12px; }
+
+.chips { display: none; flex-wrap: wrap; gap: 6px; }
+.chip {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.chip:hover { border-color: var(--ink-3); }
+.chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.chip:focus-visible, .rel button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* schematic drawing */
+svg text { font-family: var(--sans); }
+.bt { font-size: 12.5px; font-weight: 600; fill: var(--ink); }
+.bs { font-family: var(--mono); font-size: 11px; fill: var(--ink-2); }
+.sn { font-family: var(--mono); font-size: 11px; fill: var(--ink); }
+.lb { font-family: var(--mono); font-size: 11px; fill: var(--ink-3); }
+.op { font-family: var(--mono); font-size: 12px; font-weight: 500; fill: var(--ink); }
+.sym { stroke-width: 1; }
+.k-comb { fill: var(--decide-tint); stroke: var(--decide); }
+.k-seq { fill: var(--state-tint); stroke: var(--state); }
+.k-ext { fill: var(--ext); stroke: var(--ink-3); }
+.clk { fill: none; stroke: var(--state); stroke-width: 1; }
+.flag { fill: var(--surface); stroke: var(--ink-3); stroke-width: 1; }
+.w { fill: none; stroke: var(--ink-2); stroke-width: 1.2; }
+.w.bus { stroke-width: 2.3; }
+.w.dash { stroke-dasharray: 4 3; }
+.w.ar { marker-end: url(#m-ar); }
+.w.is-rel { stroke: var(--ink); stroke-width: 2.2; }
+.w.ar.is-rel { marker-end: url(#m-ar-on); }
+.dot { fill: var(--ink-2); }
+.bub { fill: var(--surface); stroke: var(--ink-2); stroke-width: 1.2; }
+.xl { stroke: var(--decide); stroke-width: 1; }
+.ah { fill: var(--ink-2); }
+.ah-on { fill: var(--ink); }
+
+.hit { cursor: pointer; outline: none; }
+.tb:hover rect { stroke-width: 2; }
+.tb.is-on rect.k-comb { fill: var(--decide); }
+.tb.is-on rect.k-seq { fill: var(--state); }
+.tb.is-on rect.k-ext { fill: var(--ink); stroke: var(--ink); }
+.tb.is-on .bt, .tb.is-on .bs { fill: var(--bg); }
+.tb.is-on .clk { stroke: var(--bg); }
+.hit:focus-visible rect { stroke: var(--focus); stroke-width: 3; }
+
+/* detail */
+.panel { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.head { display: flex; flex-direction: column; gap: 8px; }
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.cat { font-size: 12px; font-weight: 500; line-height: 1.5; padding: 2px 8px; border-radius: 3px; background: var(--note); color: var(--ink-2); }
+.cat-comb { background: var(--decide-tint); color: var(--decide); }
+.cat-seq { background: var(--state-tint); color: var(--state); }
+.ref { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+.panel h2 { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.3; }
+.panel h2 .mod { font-family: var(--mono); font-weight: 500; }
+.lead { margin: 0; font-size: 15.5px; max-width: 78ch; }
+.cols { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.sec { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+h3 { margin: 0; font-size: 12.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-3); }
+.eqs { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 8px 12px; overflow-x: auto; }
+.eq { font-family: var(--mono); font-size: 13px; line-height: 1.85; white-space: nowrap; }
+
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th, td { text-align: left; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; font-weight: 600; color: var(--ink-3); border-bottom-color: var(--ink-3); white-space: nowrap; }
+td.s, td.n { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+td.n { font-variant-numeric: tabular-nums; }
+td.d { color: var(--ink-2); min-width: 12ch; }
+
+.note { background: var(--note); border-radius: 4px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+.note p { margin: 0; color: var(--ink-2); font-size: 14px; }
+.rel { display: flex; flex-wrap: wrap; gap: 6px; }
+.rel button { border: 1px solid var(--line); background: none; border-radius: 4px; padding: 4px 10px; font-family: var(--mono); font-size: 12.5px; line-height: 1.4; cursor: pointer; }
+.rel button:hover { border-color: var(--ink-3); background: var(--surface); }
+
+.sech { margin: 0; font-size: 20px; font-weight: 600; line-height: 1.3; }
+.apply { display: flex; flex-direction: column; gap: 22px; padding-top: 22px; border-top: 1px solid var(--line); }
+.apply p { margin: 0; color: var(--ink-2); max-width: 86ch; }
+.apply li b { color: var(--ink); font-weight: 600; }
+.apply ol, .apply ul { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 6px; color: var(--ink-2); max-width: 86ch; }
+.sheet.wave svg { min-width: 840px; }
+.narrow { max-width: 820px; }
+.wl { font-family: var(--mono); font-size: 11.5px; fill: var(--ink); }
+.wc { font-family: var(--mono); font-size: 11px; fill: var(--ink-3); }
+.wt { font-family: var(--mono); font-size: 11px; fill: var(--ink); }
+.wg { stroke: var(--line); stroke-width: 1; }
+.ws { fill: none; stroke: var(--ink-2); stroke-width: 1.4; }
+.ws.hi { stroke: var(--decide); stroke-width: 1.8; }
+.wb { fill: var(--decide-tint); stroke: var(--decide); stroke-width: 1; }
+.wb.st { fill: var(--state-tint); stroke: var(--state); }
+
+.widths { max-width: 760px; }
+.foot { margin: 0; padding-top: 14px; border-top: 1px solid var(--line); color: var(--ink-3); font-size: 12.5px; max-width: 90ch; }
+
+@media (max-width: 900px) {
+  .cols { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .chips { display: flex; }
+  h1 { font-size: 22px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tb rect, .w, .chip { transition: fill .12s, stroke .12s, background-color .12s; }
+}
+</style>
+<style>.nav{margin:0;display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13.5px}.nav a{color:var(--decide);text-underline-offset:3px}.nav a:focus-visible{outline:2px solid var(--focus);outline-offset:2px}</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <marker id="m-ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path class="ah" d="M0 1L10 5L0 9z"/></marker>
+    <marker id="m-ar-on" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path class="ah-on" d="M0 1L10 5L0 9z"/></marker>
+  </defs>
+</svg>
+
+<div class="page">
+  <header class="masthead">
+    <p class="eyebrow">XLO-ZNS · logic / block-level schematic</p>
+    <h1>XLO-ZNS 논리 회로도</h1>
+    <p class="hint">배치 하나가 들어와 존이 정해지고 암호화되어 나가기까지의 결정 경로를 레지스터, 비교기, 게이트로 옮긴 회로입니다. 위쪽 시트에서 블록을 누르면 그 블록의 내부 회로와 논리식, 신호가 아래에 나옵니다. 그 아래에 이 회로를 Verilog로 구현해 돌린 결과가 있습니다.</p>
+    <p class="nav"><a href="../">← 시스템 블록도</a><a href="https://github.com/hyeonchang1021/xlo-zns-block-diagram/tree/main/rtl">Verilog 소스 (rtl/)</a></p>
+    <p class="scope"><b>개념 설계입니다.</b> 논문은 이 회로를 구현하거나 측정하지 않았고, 논문의 결과는 모두 소프트웨어 시뮬레이터에서 나왔습니다. 이 회로도는 논문 §3–§7의 규칙을 하드웨어로 만든다면 어떤 구조가 되는지를 보여줍니다. 논문에 없는 선택은 블록마다 "설계 가정"에 적었습니다.</p>
+  </header>
+
+  <section class="block" aria-label="최상위 시트">
+    <h3>최상위 시트</h3>
+    <div class="sheet top" id="top"></div>
+    <ul class="legend">
+      <li><span class="sw sw-seq"></span>상태를 가진 블록 (레지스터, 테이블)</li>
+      <li><span class="sw sw-comb"></span>조합 논리</li>
+      <li><span class="sw"></span>호스트 소프트웨어</li>
+      <li><span class="sw sw-bus"></span>굵은 선: 버스</li>
+      <li><span class="sw sw-dot"></span>점: 접속</li>
+      <li><span class="sw sw-bub"></span>작은 원: 반전</li>
+      <li>논리식 표기 <code>·</code> AND, <code>+</code> OR, <code>¬</code> NOT</li>
+    </ul>
+    <div class="chips" id="chips" role="group" aria-label="블록 선택"></div>
+  </section>
+
+  <article class="panel" id="panel" aria-live="polite"></article>
+
+  <section class="apply" id="apply" aria-label="적용">
+    <h2 class="sech">적용: Verilog 구현과 시뮬레이션</h2>
+    <p>위 회로도를 Verilog로 구현해서 시뮬레이터에서 돌렸습니다. 결정 경로 전체(IN, KEYEP, ZTBL, MATCH, SEL, ADMIT, ZUPD, RES)와 회수 게이트, 빈 존 pool이 한 모듈에 들어 있고, 배치 하나의 결정은 한 클록 사이클에 끝납니다.</p>
+
+    <div class="block narrow">
+      <h3>구현한 파일</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>파일</th><th>줄 수</th><th>내용</th></tr></thead>
+        <tbody>
+          <tr><td class="s">xlo_place.v</td><td class="n">238</td><td class="d">회로도의 결정 경로. 합성 가능한 Verilog-2005</td></tr>
+          <tr><td class="s">tb_xlo.v</td><td class="n">89</td><td class="d">테스트벤치. 배치를 넣고, 결정마다 슬롯 테이블 전체를 로그로 남김. 존 reset은 단순 모델</td></tr>
+          <tr><td class="s">check.py</td><td class="n">132</td><td class="d">검사기. 로그의 슬롯 상태에 논문 §6.3 규칙을 직접 적용해 RTL의 결정과 대조</td></tr>
+          <tr><td class="s">gen_stim.py</td><td class="n">22</td><td class="d">자극 생성. 논문 §8.1의 배치 길이와 등급 분포</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="block">
+      <h3>동작 시나리오 (시뮬레이션 파형)</h3>
+      <p>배치 11개로 네 단계와 키 교체, 예산 위반, 존 finish, 슬롯 교체를 모두 거치는 시나리오입니다. 한 화면에 들어오도록 파라미터를 줄였습니다(슬롯 4개, 존 용량 64단위, 키 교체 간격 40단위, BK_SAFE = 1). 값은 모두 시뮬레이터 출력입니다.</p>
+      <div class="sheet wave" id="wave"></div>
+      <div class="tbl"><table>
+        <thead><tr><th>사이클</th><th>c</th><th>len</th><th>e</th><th>단계</th><th>슬롯 (존)</th><th>wp</th><th>bk</th><th>viol</th><th>무슨 일이 일어났나</th></tr></thead>
+        <tbody id="scn"></tbody>
+      </table></div>
+    </div>
+
+    <div class="block narrow">
+      <h3>무작위 검증</h3>
+      <p>배치 12만 개씩 두 설정으로 돌리고, 모든 결정을 검사기로 대조했습니다. 검사기는 단계와 슬롯 선택, 키 경계, 키 epoch, 예산 위반, write pointer와 finish, 슬롯 교체 순서, 빈 존 수, reset_go를 RTL과 따로 계산합니다.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>항목</th><th>논문 설정</th><th>스트레스 설정</th></tr></thead>
+        <tbody><tr><td class="d">배치 수</td><td class="n">120,000</td><td class="n">120,000 (재배치 30,035)</td></tr><tr><td class="d">시뮬레이션 사이클</td><td class="n">120,023</td><td class="n">139,121</td></tr><tr><td class="d">단계 1 · 같은 key domain</td><td class="n">116,244</td><td class="n">20,233</td></tr><tr><td class="d">단계 2 · 묶이지 않은 존</td><td class="n">321</td><td class="n">15,982</td></tr><tr><td class="d">단계 3 · 같은 등급, 이전 epoch</td><td class="n">899</td><td class="n">13,053</td></tr><tr><td class="d">단계 4 · 가장 덜 찬 존</td><td class="n">2,536</td><td class="n">70,732</td></tr><tr><td class="d">키 경계 (bk = 1)</td><td class="n">3,435 · 배치당 0.0286</td><td class="n">83,785 · 배치당 0.6982</td></tr><tr><td class="d">예산 위반 (viol)</td><td class="n">1,117</td><td class="n">52,949</td></tr><tr><td class="d">키 교체 (rot)</td><td class="n">836</td><td class="n">23,640</td></tr><tr><td class="d">append 뒤 finish (fin)</td><td class="n">307</td><td class="n">7,169</td></tr><tr><td class="d">들어갈 곳이 없어 finish (seal)</td><td class="n">0</td><td class="n">8,799</td></tr><tr><td class="d">슬롯 교체 (refill)</td><td class="n">307</td><td class="n">15,968</td></tr><tr><td class="d">존 reset 후 반환</td><td class="n">97</td><td class="n">15,750</td></tr><tr><td class="d">reset_go = 1인 사이클</td><td class="n">403</td><td class="n">97,536</td></tr><tr><td class="d">연기 조건이 걸린 사이클</td><td class="n">1,948</td><td class="n">24,512</td></tr><tr><td class="d">force 구간 사이클</td><td class="n">0</td><td class="n">7,381</td></tr><tr><td class="d">빈 존 수 최솟값</td><td class="n">30</td><td class="n">2</td></tr><tr><td class="d">검사기 불일치</td><td class="n">0</td><td class="n">0</td></tr></tbody>
+      </table></div>
+      <p>논문 설정은 존 용량 16384단위, 키 교체 6144단위, Zipf(1.1) 등급, log-uniform 길이입니다. 스트레스 설정은 존 용량 512단위, 키 교체 300단위, 균등 등급에 재배치 배치를 25% 섞어서, 논문 설정에서 드문 단계 3과 4, seal, force 구간을 자주 지나가게 했습니다. 검사기가 실제로 오류를 잡는지 보려고 RTL에서 단계 3을 일부러 꺼 봤고, 2만 배치에서 13,750건이 잡혔습니다.</p>
+    </div>
+
+    <div class="block narrow">
+      <h3>FPGA 합성 (Lattice iCE40 HX8K, Yosys + nextpnr)</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>항목</th><th>값</th></tr></thead>
+        <tbody>
+          <tr><td class="d">LUT4</td><td class="n">5,763</td></tr>
+          <tr><td class="d">플립플롭</td><td class="n">766</td></tr>
+          <tr><td class="d">블록 RAM (빈 존 FIFO)</td><td class="n">1</td></tr>
+          <tr><td class="d">배치·배선 후 논리 셀</td><td class="n">6,240 / 7,680 (81%)</td></tr>
+          <tr><td class="d">최대 동작 주파수</td><td class="n">8.71 MHz</td></tr>
+        </tbody>
+      </table></div>
+      <p>결정 하나에 한 사이클, 약 115 ns가 걸립니다. 슬롯 14개 비교, 최소 write pointer 탐색, 존 갱신이 레지스터 없이 한 경로에 이어져 있어서 주파수가 낮습니다. MATCH와 SEL 사이에 파이프라인 레지스터를 넣으면 올라갑니다. 다만 논문 운영점의 평균 append 지연이 0.67 ms이므로, 지금 속도로도 결정 시간은 그 수천 분의 1입니다.</p>
+    </div>
+
+    <div class="block">
+      <h3>구현하면서 회로도를 고친 곳</h3>
+      <ol>
+        <li><b>bk에 hit을 곱했습니다.</b> 배치가 들어갈 슬롯이 없는 사이클에도 tier가 3으로 나와서, 그대로 두면 없는 경계를 세게 됩니다.</li>
+        <li><b>존을 finish하는 규칙 두 개를 넣었습니다.</b> 처음 회로도는 write pointer가 정확히 용량에 닿아야 Full이 됐는데, 배치 길이가 제각각이라 존이 조금씩 남은 채로 멈춥니다. 남은 공간이 8단위 미만이면 finish하고, 배치가 어디에도 안 들어가면 가장 많이 찬 존을 finish합니다.</li>
+        <li><b>슬롯 교체를 다음 사이클로 옮겼습니다.</b> 빈 존이 없을 때는 Full 슬롯을 그대로 두고 존이 돌아올 때까지 기다립니다.</li>
+      </ol>
+    </div>
+
+    <div class="block">
+      <h3>이 구현이 다루지 않는 것</h3>
+      <ul>
+        <li>AES-XTS 엔진, victim 선택, 재배치 FSM은 RTL에 없습니다. 테스트벤치는 가장 먼저 봉인된 존을 6사이클 뒤에 돌려주는 단순 모델을 씁니다.</li>
+        <li>데이터 수명과 compaction을 모델링하지 않으므로 논문의 write amplification이나 지연 수치를 재현하지 않습니다.</li>
+        <li>배치당 키 경계 0.0286은 논문의 0.0038과 조건이 달라 직접 비교할 수 없습니다. 이 RTL에서는 단계 4가 2.1% 나옵니다. 등급의 존이 거의 찼는데 빈 슬롯이 없으면 다른 등급의 존으로 넘어가기 때문입니다.</li>
+        <li>FPGA 보드에 올려서 돌려 보지는 않았습니다. 합성과 배치·배선까지만 확인했습니다.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="block widths" aria-label="비트 폭 근거">
+    <h3>비트 폭 근거 (논문 §8.1의 설정에서 계산)</h3>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>신호</th><th>폭</th><th>근거</th></tr></thead>
+        <tbody>
+          <tr><td class="s">zid</td><td class="n">8</td><td class="d">존 수 N<sub>z</sub> = 256</td></tr>
+          <tr><td class="s">wp</td><td class="n">15</td><td class="d">존 용량 64 MiB = 4 KiB 단위 16384개. 0부터 16384까지 담아야 함</td></tr>
+          <tr><td class="s">len</td><td class="n">8</td><td class="d">배치 32–512 KiB = 8–128 단위</td></tr>
+          <tr><td class="s">c</td><td class="n">3</td><td class="d">기밀 등급 8개</td></tr>
+          <tr><td class="s">ep</td><td class="n">8</td><td class="d">설계 가정. 24 MiB를 쓸 때마다 1 증가</td></tr>
+          <tr><td class="s">ROT_CNT</td><td class="n">13</td><td class="d">키 교체 간격 24 MiB = 6144 단위</td></tr>
+          <tr><td class="s">kd</td><td class="n">11</td><td class="d">key domain = {c, ep}</td></tr>
+          <tr><td class="s">sel</td><td class="n">4</td><td class="d">open 존 슬롯 14개 (MOR = 14)</td></tr>
+          <tr><td class="s">FREE_CNT</td><td class="n">9</td><td class="d">빈 존 0–256개</td></tr>
+          <tr><td class="s">BK_ACC, BK_SAFE</td><td class="n">8</td><td class="d">설계 가정. 논문 운영점의 평균 예산은 17.3</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="foot">회로도의 논리식은 Verilog 구현과 같고, 구현은 위의 무작위 검증을 통과했습니다. 합성 결과는 Yosys 0.33과 nextpnr-ice40의 값이며 시드에 따라 조금 달라집니다. 전력은 다루지 않았습니다.</p>
+</div>
+
+<script>
+(function () {
+  function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function pt(a) { return a[0] + ',' + a[1]; }
+
+  /* ---- drawing library: every symbol returns its port coordinates ---- */
+  function Sheet(W, H) {
+    var s = [];
+    var o = {
+      txt: function (x, y, t, cls, anc) {
+        s.push('<text class="' + cls + '" x="' + x + '" y="' + y + '" text-anchor="' + (anc || 'middle') + '" dominant-baseline="central">' + esc(t) + '</text>');
+      },
+      flag: function (x, y, name) {
+        var w = Math.round(name.length * 6.7 + 14);
+        s.push('<polygon class="flag" points="' + x + ',' + (y - 9) + ' ' + (x + w - 8) + ',' + (y - 9) + ' ' + (x + w) + ',' + y + ' ' + (x + w - 8) + ',' + (y + 9) + ' ' + x + ',' + (y + 9) + '"/>');
+        o.txt(x + 6, y, name, 'sn', 'start');
+        return [x + w, y];
+      },
+      rect: function (x, y, w, h, kind, clk) {
+        s.push('<rect class="sym k-' + kind + '" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="4"/>');
+        if (clk) s.push('<path class="clk" d="M' + x + ' ' + (y + h - 15) + 'l7 5l-7 5"/>');
+      },
+      blk: function (x, y, w, h, kind, t1, t2, t3, clk) {
+        o.rect(x, y, w, h, kind, clk);
+        var lines = [t1, t2, t3].filter(function (v) { return v; });
+        var y0 = y + h / 2 - (lines.length - 1) * 7.5;
+        lines.forEach(function (t, i) { o.txt(x + w / 2, y0 + i * 15, t, i === 0 ? 'bt' : 'bs'); });
+        return { l: [x, y + h / 2], r: [x + w, y + h / 2], t: [x + w / 2, y], b: [x + w / 2, y + h] };
+      },
+      cbox: function (x, y, w, label) {
+        s.push('<rect class="sym k-comb" x="' + (x - w / 2) + '" y="' + (y - 14) + '" width="' + w + '" height="28" rx="4"/>');
+        o.txt(x, y, label, 'op');
+        return { l: [x - w / 2, y], o: [x + w / 2, y] };
+      },
+      cmp2: function (x, y, op) {
+        s.push('<rect class="sym k-comb" x="' + (x - 20) + '" y="' + (y - 19) + '" width="40" height="38" rx="4"/>');
+        o.txt(x, y, op, 'op');
+        return { a: [x - 20, y - 11], b: [x - 20, y + 11], o: [x + 20, y] };
+      },
+      add: function (x, y) {
+        s.push('<circle class="sym k-comb" cx="' + x + '" cy="' + y + '" r="13"/>');
+        o.txt(x, y, '+', 'op');
+        return { l: [x - 13, y], t: [x, y - 13], b: [x, y + 13], o: [x + 13, y] };
+      },
+      xor: function (x, y) {
+        s.push('<circle class="sym k-comb" cx="' + x + '" cy="' + y + '" r="11"/>');
+        s.push('<path class="xl" d="M' + (x - 11) + ' ' + y + 'H' + (x + 11) + 'M' + x + ' ' + (y - 11) + 'V' + (y + 11) + '"/>');
+        return { l: [x - 11, y], t: [x, y - 11], o: [x + 11, y] };
+      },
+      andg: function (x, y, n, h) {
+        s.push('<path class="sym k-comb" d="M' + (x - 16) + ' ' + (y - h / 2) + 'H' + x + 'A' + (h / 2) + ' ' + (h / 2) + ' 0 0 1 ' + x + ' ' + (y + h / 2) + 'H' + (x - 16) + 'Z"/>');
+        var i = [];
+        for (var k = 0; k < n; k++) i.push([x - 16, y - h / 2 + (k + 0.5) * h / n]);
+        return { i: i, o: [x + h / 2, y] };
+      },
+      org: function (x, y, h) {
+        s.push('<path class="sym k-comb" d="M' + (x - 16) + ' ' + (y - h / 2) + 'Q' + (x - 9) + ' ' + y + ' ' + (x - 16) + ' ' + (y + h / 2) + 'Q' + (x + 4) + ' ' + (y + h / 2) + ' ' + (x + 16) + ' ' + y + 'Q' + (x + 4) + ' ' + (y - h / 2) + ' ' + (x - 16) + ' ' + (y - h / 2) + 'Z"/>');
+        return { i: [[x - 13, y - h / 4], [x - 13, y + h / 4]], o: [x + 16, y] };
+      },
+      bub: function (p) {
+        s.push('<circle class="bub" cx="' + (p[0] - 3.5) + '" cy="' + p[1] + '" r="3"/>');
+        return [p[0] - 6.5, p[1]];
+      },
+      mux: function (x, y, h, n) {
+        s.push('<polygon class="sym k-comb" points="' + x + ',' + (y - h / 2) + ' ' + (x + 18) + ',' + (y - h / 2 + 8) + ' ' + (x + 18) + ',' + (y + h / 2 - 8) + ' ' + x + ',' + (y + h / 2) + '"/>');
+        var i = [];
+        for (var k = 0; k < n; k++) i.push([x, y - h / 2 + (k + 0.5) * h / n]);
+        return { i: i, o: [x + 18, y], s: [x + 9, y + h / 2 - 4] };
+      },
+      wire: function (pts, opt) {
+        opt = opt || {};
+        var cls = 'w' + (opt.bus ? ' bus' : '') + (opt.dash ? ' dash' : '') + (opt.ar ? ' ar' : '');
+        s.push('<polyline class="' + cls + '"' + (opt.parts ? ' data-parts="' + opt.parts + '"' : '') + ' points="' + pts.map(pt).join(' ') + '"/>');
+        (opt.dots || []).forEach(function (d) { s.push('<circle class="dot" cx="' + d[0] + '" cy="' + d[1] + '" r="2.6"/>'); });
+        if (opt.lab) o.txt(opt.lab[0], opt.lab[1], opt.lab[2], 'lb', opt.lab[3]);
+      },
+      tb: function (id, x, y, kind, t1, t2) {
+        s.push('<g class="hit tb" data-id="' + id + '" role="button" tabindex="0" aria-label="' + esc(t1) + '">');
+        o.blk(x, y, 120, 70, kind, t1, t2, null, kind === 'seq');
+        s.push('</g>');
+      },
+      done: function (label, interactive) {
+        return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="' + (interactive ? 'group' : 'img') + '" aria-label="' + esc(label) + '">' + s.join('') + '</svg>';
+      }
+    };
+    return o;
+  }
+
+  /* ---- top sheet ---- */
+  function topSheet() {
+    var d = Sheet(1230, 500);
+    d.wire([d.flag(12, 95, 'app batch'), [110, 95]], { ar: 1, bus: 1, parts: 'in' });
+    d.wire([[230, 95], [286, 95]], { ar: 1, bus: 1, parts: 'in keyep', lab: [258, 85, 'len, c'] });
+    d.wire([[406, 95], [462, 95]], { ar: 1, bus: 1, parts: 'keyep match', lab: [434, 85, 'kd_b'] });
+    d.wire([[582, 95], [638, 95]], { ar: 1, bus: 1, parts: 'match sel', lab: [610, 85, 't1..t4'] });
+    d.wire([[758, 95], [814, 95]], { ar: 1, bus: 1, parts: 'sel admit', lab: [786, 85, 'sel, bk'] });
+    d.wire([[934, 95], [990, 95]], { ar: 1, parts: 'admit xts', lab: [962, 85, 'admit'] });
+    d.wire([[1110, 95], [1130, 95]], { ar: 1, bus: 1, parts: 'xts' });
+    d.flag(1130, 95, 'zone append');
+    d.wire([[522, 230], [522, 130]], { ar: 1, bus: 1, parts: 'ztbl match', lab: [530, 182, 'slots ×14', 'start'] });
+    d.wire([[698, 130], [698, 230]], { ar: 1, bus: 1, parts: 'sel zupd', lab: [706, 182, 'sel', 'start'] });
+    d.wire([[582, 255], [638, 255]], { ar: 1, bus: 1, parts: 'ztbl zupd', lab: [610, 245, 'rd'] });
+    d.wire([[638, 280], [582, 280]], { ar: 1, bus: 1, parts: 'zupd ztbl', lab: [610, 292, 'wr'] });
+    d.wire([[758, 265], [814, 265]], { ar: 1, bus: 1, parts: 'zupd res', lab: [786, 255, 'st′'] });
+    d.wire([[854, 230], [854, 130]], { ar: 1, parts: 'res admit', lab: [846, 182, 'res_ok', 'end'] });
+    d.wire([[1030, 230], [1030, 180], [900, 180], [900, 130]], { ar: 1, bus: 1, parts: 'host admit', lab: [965, 170, 'BK_SAFE'] });
+    d.wire([[1080, 130], [1080, 230]], { ar: 1, dash: 1, parts: 'xts host', lab: [1088, 200, 'completions', 'start'] });
+    d.wire([[934, 265], [990, 265]], { ar: 1, dash: 1, parts: 'res host', lab: [962, 255, 'n_ij'] });
+    d.wire([[678, 300], [678, 400]], { ar: 1, bus: 1, parts: 'zupd recl', lab: [670, 352, 'full zid', 'end'] });
+    d.wire([[728, 400], [728, 300]], { ar: 1, bus: 1, parts: 'recl zupd', lab: [736, 352, 'free zid', 'start'] });
+    d.wire([[638, 435], [170, 435], [170, 130]], { ar: 1, bus: 1, parts: 'recl in', lab: [400, 425, 'rel batch'] });
+    d.wire([[1050, 300], [1050, 425], [758, 425]], { ar: 1, parts: 'host recl', lab: [905, 415, 'sigma_lt_half, backlog'] });
+    d.wire([[758, 452], [1130, 452]], { ar: 1, bus: 1, parts: 'recl' });
+    d.flag(1130, 452, 'zone reset');
+    d.tb('in', 110, 60, 'seq', 'IN', 'batch mux + reg');
+    d.tb('keyep', 286, 60, 'seq', 'KEYEP', 'key-epoch file');
+    d.tb('match', 462, 60, 'comb', 'MATCH ×14', 'slot compare');
+    d.tb('sel', 638, 60, 'comb', 'SEL', 'tier select');
+    d.tb('admit', 814, 60, 'seq', 'ADMIT', 'Bk budget');
+    d.tb('xts', 990, 60, 'seq', 'XTS', 'AES-XTS engine');
+    d.tb('ztbl', 462, 230, 'seq', 'ZTBL', 'open-zone table');
+    d.tb('zupd', 638, 230, 'comb', 'ZUPD', 'zone update');
+    d.tb('res', 814, 230, 'comb', 'RES', 'MOR/MAR check');
+    d.tb('host', 990, 230, 'ext', 'HOST SW', 'P-K, DTMC');
+    d.tb('recl', 638, 400, 'seq', 'RECL', 'reclaim gate');
+    return d.done('XLO-ZNS 최상위 시트. 블록을 선택하면 내부 회로가 바뀝니다.', true);
+  }
+
+  /* ---- sub-sheets ---- */
+  var SH = {
+    in: function () {
+      var d = Sheet(640, 176);
+      var m = d.mux(190, 75, 80, 2);
+      d.wire([d.flag(12, 55, 'app{len,c}'), m.i[0]], { bus: 1 });
+      d.wire([d.flag(12, 95, 'rel{len,c}'), m.i[1]], { bus: 1 });
+      d.wire([d.flag(12, 150, 'rel_vld'), [199, 150], m.s], { ar: 1 });
+      d.blk(260, 53, 150, 44, 'seq', 'BATCH_REG', 'vld len[7:0] c[2:0]', null, 1);
+      d.wire([m.o, [260, 75]], { bus: 1 });
+      d.wire([[410, 64], [470, 64]], { bus: 1 }); d.flag(470, 64, 'len[7:0]');
+      d.wire([[410, 86], [470, 86]], { bus: 1 }); d.flag(470, 86, 'c[2:0]');
+      return d.done('IN 내부 회로');
+    },
+    keyep: function () {
+      var d = Sheet(640, 190);
+      d.blk(150, 30, 110, 44, 'seq', 'ROT_CNT[8]', 'cnt[12:0]', null, 1);
+      d.blk(150, 130, 110, 44, 'seq', 'KEY_EP[8]', 'ep[7:0]', null, 1);
+      d.wire([d.flag(12, 52, 'c[2:0]'), [150, 52]], { dots: [[120, 52]] });
+      d.wire([[120, 52], [120, 152], [150, 152]]);
+      var a = d.add(320, 52);
+      d.wire([[260, 52], a.l], { bus: 1 });
+      d.wire([d.flag(12, 16, 'len[7:0]'), [320, 16], a.t], { bus: 1 });
+      var c = d.cbox(392, 52, 64, '≥ 6144');
+      d.wire([a.o, c.l], { bus: 1, dots: [[345, 52]] });
+      d.wire([[345, 52], [345, 96], [205, 96], [205, 74]], { ar: 1, lab: [275, 87, 'rot ? 0 : sum'] });
+      d.wire([c.o, [480, 52]], { dots: [[450, 52]] }); d.flag(480, 52, 'rot');
+      d.wire([[450, 52], [450, 114], [230, 114], [230, 130]], { ar: 1, lab: [272, 124, 'ep ← ep + 1', 'start'] });
+      d.wire([[260, 152], [480, 152]], { bus: 1 }); d.flag(480, 152, 'e[7:0]');
+      return d.done('KEYEP 내부 회로');
+    },
+    ztbl: function () {
+      var d = Sheet(640, 180);
+      d.rect(200, 24, 200, 132, 'seq', 1);
+      d.txt(300, 42, 'OPEN_ZONE[14]', 'bt');
+      ['zid[7:0]', 'st[2:0]', 'wp[14:0]', 'bnd', 'kd[10:0] = {cls, ep}'].forEach(function (t, i) { d.txt(300, 64 + i * 18, t, 'bs'); });
+      d.wire([d.flag(12, 50, 'sel[3:0]'), [200, 50]], { ar: 1 });
+      d.wire([d.flag(12, 90, 'wr{st,wp,bnd,kd}'), [200, 90]], { ar: 1, bus: 1 });
+      d.wire([d.flag(12, 130, 'wr_en'), [200, 130]], { ar: 1 });
+      d.wire([[400, 60], [450, 60]], { bus: 1 }); d.flag(450, 60, 'wp_i[14:0] ×14');
+      d.wire([[400, 95], [450, 95]], { bus: 1 }); d.flag(450, 95, 'bnd_i, kd_i ×14');
+      d.wire([[400, 130], [450, 130]], { bus: 1 }); d.flag(450, 130, 'st_i ×14');
+      return d.done('ZTBL 내부 구조');
+    },
+    match: function () {
+      var d = Sheet(640, 268);
+      var a = d.add(150, 40);
+      d.wire([d.flag(12, 40, 'wp_i[14:0]'), a.l], { bus: 1 });
+      d.wire([d.flag(12, 84, 'len[7:0]'), [150, 84], a.b], { bus: 1 });
+      var cb = d.cbox(236, 40, 76, '≤ 16384');
+      d.wire([a.o, cb.l], { bus: 1 });
+      var c1 = d.cmp2(150, 130, '='), c2 = d.cmp2(150, 192, '=');
+      d.wire([d.flag(12, 119, 'cls_i[2:0]'), c1.a]); d.wire([d.flag(12, 141, 'c[2:0]'), c1.b]);
+      d.wire([d.flag(12, 181, 'ep_i[7:0]'), c2.a]); d.wire([d.flag(12, 203, 'e[7:0]'), c2.b]);
+      var g1 = d.andg(430, 50, 4, 40), g2 = d.andg(430, 110, 2, 26), g3 = d.andg(430, 170, 4, 40);
+      /* fit rail */
+      d.wire([cb.o, [300, 40]]);
+      d.wire([g1.i[0], [300, 35], [300, 218], [500, 218]], { dots: [[300, 40], [300, 103.5], [300, 155]], lab: [352, 26, 'fit_i'] });
+      d.wire([[300, 103.5], g2.i[0]]); d.wire([[300, 155], g3.i[0]]);
+      /* bnd rail */
+      d.wire([d.flag(12, 246, 'bnd_i'), [360, 246], [360, 45], g1.i[1]], { dots: [[360, 116.5], [360, 165]] });
+      d.wire([[360, 116.5], d.bub(g2.i[1])]); d.wire([[360, 165], g3.i[1]]);
+      /* ceq rail */
+      d.wire([c1.o, [320, 130]], { dots: [[320, 130]], lab: [240, 121, 'ceq'] });
+      d.wire([g1.i[2], [320, 55], [320, 175], g3.i[2]]);
+      /* eeq rail */
+      d.wire([c2.o, [340, 192], [340, 65], g1.i[3]], { dots: [[340, 185]], lab: [240, 183, 'eeq'] });
+      d.wire([[340, 185], d.bub(g3.i[3])]);
+      d.wire([g1.o, [500, 50]]); d.flag(500, 50, 't1_i');
+      d.wire([g2.o, [500, 110]]); d.flag(500, 110, 't2_i');
+      d.wire([g3.o, [500, 170]]); d.flag(500, 170, 't3_i');
+      d.flag(500, 218, 't4_i');
+      d.txt(628, 252, '슬롯 i = 0..13, 같은 회로 14개', 'lb', 'end');
+      return d.done('MATCH 내부 회로, 슬롯 하나 분량');
+    },
+    sel: function () {
+      var d = Sheet(640, 262);
+      [45, 85, 125].forEach(function (y, k) {
+        d.blk(120, y - 15, 100, 30, 'comb', 'PRI ENC 14→4');
+        d.wire([d.flag(12, y, 't' + (k + 1) + '[13:0]'), [120, y]], { bus: 1 });
+        d.wire([[220, y], [330, y]], { bus: 1, lab: [275, y - 9, 'idx' + (k + 1)] });
+      });
+      d.blk(120, 146, 100, 44, 'comb', 'MIN-WP TREE', 'least-full');
+      d.wire([d.flag(12, 158, 't4[13:0]'), [120, 158]], { bus: 1 });
+      d.wire([d.flag(12, 180, 'wp_i ×14'), [120, 180]], { bus: 1 });
+      d.wire([[220, 165], [330, 165]], { bus: 1, lab: [275, 156, 'idx4'] });
+      var m = d.mux(330, 105, 160, 4);
+      d.blk(120, 195, 100, 40, 'comb', 'TIER ENC', 'first hit');
+      d.wire([d.flag(12, 215, 't{1..4}[13:0]'), [120, 215]], { bus: 1 });
+      d.wire([[220, 206], [480, 206]], { bus: 1, dots: [[339, 206], [380, 206]] }); d.flag(480, 206, 'tier[1:0]');
+      d.wire([[339, 206], m.s], { ar: 1 });
+      var gb = d.andg(446, 170, 2, 26);
+      d.wire([[380, 206], [380, 163.5], gb.i[0]], { lab: [405, 153, 'tier[1]'] });
+      d.wire([[220, 226], [300, 226], [300, 240], [480, 240]], { dots: [[420, 240]] }); d.flag(480, 240, 'hit');
+      d.wire([[420, 240], [420, 176.5], gb.i[1]]);
+      d.wire([gb.o, [480, 170]]); d.flag(480, 170, 'bk');
+      d.wire([m.o, [480, 105]], { bus: 1 }); d.flag(480, 105, 'sel[3:0]');
+      return d.done('SEL 내부 회로');
+    },
+    admit: function () {
+      var d = Sheet(640, 232);
+      var a = d.add(150, 50);
+      d.wire([d.flag(12, 50, 'bk'), a.l]);
+      d.blk(200, 30, 100, 40, 'seq', 'BK_ACC', '[7:0]', null, 1);
+      d.wire([a.o, [200, 50]], { bus: 1 });
+      var cp = d.cmp2(390, 61, '≥');
+      d.wire([[300, 50], cp.a], { bus: 1, dots: [[330, 50]] });
+      d.wire([[330, 50], [330, 16], [150, 16], a.t], { ar: 1, bus: 1 });
+      d.wire([d.flag(12, 96, 'epoch_tick'), [250, 96], [250, 70]], { ar: 1, lab: [258, 84, 'clr', 'start'] });
+      d.wire([d.flag(12, 130, 'BK_SAFE[7:0]'), [350, 130], [350, 72], cp.b], { bus: 1 });
+      var g = d.andg(460, 67.5, 2, 26);
+      d.wire([cp.o, g.i[0]]);
+      d.wire([d.flag(12, 160, 'bk'), [425, 160], [425, 74], g.i[1]]);
+      d.wire([g.o, [510, 67.5]]); d.flag(510, 67.5, 'viol');
+      var g2 = d.andg(460, 197, 2, 44);
+      d.wire([d.flag(12, 186, 'hit'), g2.i[0]]); d.wire([d.flag(12, 208, 'res_ok'), g2.i[1]]);
+      d.wire([g2.o, [510, 197]]); d.flag(510, 197, 'admit');
+      return d.done('ADMIT 내부 회로');
+    },
+    zupd: function () {
+      var d = Sheet(640, 340);
+      var a = d.add(150, 50);
+      d.wire([d.flag(12, 50, 'wp_s[14:0]'), a.l], { bus: 1 });
+      d.wire([d.flag(12, 94, 'len[7:0]'), [150, 94], a.b], { bus: 1 });
+      var cb = d.cbox(250, 50, 76, '> 16376');
+      d.wire([a.o, cb.l], { bus: 1, dots: [[185, 50]] });
+      var m = d.mux(420, 30, 44, 2);
+      d.wire([[185, 50], [185, 19], m.i[0]], { bus: 1, lab: [300, 10, 'wp_n'] });
+      d.txt(376, 41, '16384', 'lb', 'end'); d.wire([[380, 41], m.i[1]], { bus: 1 });
+      d.wire([m.o, [500, 30]], { bus: 1 }); d.flag(500, 30, 'wp′[14:0]');
+      d.wire([cb.o, [300, 50], [300, 72], [500, 72]], { dots: [[300, 72], [429, 72]] }); d.flag(500, 72, 'fin');
+      d.wire([[429, 72], m.s], { ar: 1 });
+      d.blk(330, 100, 130, 64, 'comb', 'NEXT STATE', 'fin → ZSF', 'else → ZSIO');
+      d.wire([[300, 72], [300, 116], [330, 116]], { ar: 1 });
+      d.wire([d.flag(12, 148, 'st_s[2:0]'), [330, 148]], { ar: 1 });
+      d.wire([[460, 132], [500, 132]]); d.flag(500, 132, 'st′[2:0]');
+      d.wire([d.flag(12, 190, 'kd_b[10:0]'), [500, 190]], { bus: 1, lab: [300, 180, 'kd′ ← kd_b, bnd′ ← 1'] }); d.flag(500, 190, 'kd′[10:0]');
+      var g = d.andg(200, 240, 2, 44);
+      d.wire([d.flag(12, 229, 'zsf_any'), g.i[0]]); d.wire([d.flag(12, 251, 'free_avail'), g.i[1]]);
+      d.wire([g.o, [260, 240]]); d.flag(260, 240, 'refill');
+      d.txt(330, 240, 'slot[rf] ← {free_zid, ZSE, 0, 0}', 'lb', 'start');
+      var g2 = d.andg(200, 300, 2, 44);
+      d.wire([d.flag(12, 289, 'miss'), g2.i[0]]); d.wire([d.flag(12, 311, 'zsf_any'), d.bub(g2.i[1])]);
+      d.wire([g2.o, [260, 300]]); d.flag(260, 300, 'seal');
+      d.txt(330, 300, 'slot[argmax wp] ← {ZSF, wp = 16384}', 'lb', 'start');
+      return d.done('ZUPD 내부 회로');
+    },
+    res: function () {
+      var d = Sheet(640, 170);
+      d.blk(120, 35, 120, 30, 'comb', 'st ∈ {IO, EO}');
+      d.blk(120, 115, 120, 30, 'comb', 'st ∈ {IO, EO, C}');
+      d.wire([d.flag(12, 50, 'st_i ×14'), [120, 50]], { bus: 1, dots: [[100, 50]] });
+      d.wire([[100, 50], [100, 130], [120, 130]], { bus: 1 });
+      d.blk(270, 35, 80, 30, 'comb', 'POPCOUNT'); d.blk(270, 115, 80, 30, 'comb', 'POPCOUNT');
+      d.wire([[240, 50], [270, 50]], { bus: 1 }); d.wire([[240, 130], [270, 130]], { bus: 1 });
+      var c1 = d.cbox(450, 50, 60, '≤ 14'), c2 = d.cbox(450, 130, 60, '≤ 32');
+      d.wire([[350, 50], c1.l], { bus: 1, lab: [385, 40, 'open_cnt'] });
+      d.wire([[350, 130], c2.l], { bus: 1, lab: [385, 120, 'act_cnt'] });
+      var g = d.andg(540, 90, 2, 44);
+      d.wire([c1.o, [502, 50], [502, 79], g.i[0]]); d.wire([c2.o, [502, 130], [502, 101], g.i[1]]);
+      d.wire([g.o, [575, 90]]); d.flag(575, 90, 'res_ok');
+      return d.done('RES 내부 회로');
+    },
+    recl: function () {
+      var d = Sheet(640, 275);
+      d.blk(20, 30, 100, 40, 'seq', 'FREE_CNT', '[8:0]', null, 1);
+      var lo = d.cbox(190, 38, 56, '< 32'), fo = d.cbox(190, 78, 56, '≤ 5');
+      d.wire([[120, 50], [140, 50], [140, 38], lo.l], { bus: 1, dots: [[140, 50]] });
+      d.wire([[140, 50], [140, 78], fo.l], { bus: 1 });
+      var bz = d.cbox(200, 130, 64, '> 4000');
+      d.wire([d.flag(12, 130, 'backlog_us[15:0]'), bz.l], { bus: 1 });
+      var g1 = d.andg(320, 150, 3, 36);
+      d.wire([fo.o, [290, 78], [290, 138], d.bub(g1.i[0])], { dots: [[290, 78]], lab: [254, 69, 'force'] });
+      d.wire([bz.o, [270, 130], [270, 150], g1.i[1]], { lab: [251, 121, 'busy'] });
+      d.wire([d.flag(12, 172, 'sigma_lt_half'), [280, 172], [280, 162], g1.i[2]]);
+      var g2 = d.andg(410, 44.5, 2, 26);
+      d.wire([lo.o, g2.i[0]], { lab: [300, 29, 'lo'] });
+      d.wire([g1.o, [370, 150], [370, 51], d.bub(g2.i[1])], { lab: [378, 120, 'defer', 'start'] });
+      var g3 = d.org(480, 61, 24);
+      d.wire([g2.o, [445, 44.5], [445, 55], g3.i[0]]);
+      d.wire([[290, 78], [455, 78], [455, 67], g3.i[1]]);
+      d.wire([g3.o, [530, 61]], { dots: [[512, 61]] }); d.flag(530, 61, 'reset_go');
+      d.blk(360, 195, 170, 62, 'seq', 'RECLAIM FSM', 'PICK → COPY → RESET', null, 1);
+      d.wire([[512, 61], [512, 195]], { ar: 1 });
+      d.blk(150, 204, 150, 44, 'seq', 'ZONE_RAM[256]', 'st, live, cls', null, 1);
+      d.wire([[300, 226], [360, 226]], { ar: 1, bus: 1, lab: [330, 216, 'victim'] });
+      d.wire([[530, 208], [550, 208]], { bus: 1 }); d.flag(550, 208, 'rel{64,c}');
+      d.wire([[530, 230], [550, 230]]); d.flag(550, 230, 'zone_reset');
+      d.wire([[530, 250], [550, 250]], { bus: 1 }); d.flag(550, 250, 'free_zid');
+      return d.done('RECL 내부 회로');
+    },
+    xts: function () {
+      var d = Sheet(640, 256);
+      d.blk(140, 60, 150, 44, 'seq', 'KEY_CTX[14]', 'K1, K2 round keys', null, 1);
+      d.wire([d.flag(12, 82, 'sel[3:0]'), [140, 82]], { ar: 1 });
+      d.blk(150, 140, 130, 44, 'comb', 'KEY EXPAND', 'runs when bk = 1');
+      d.wire([d.flag(12, 151, 'kd_b[10:0]'), [150, 151]], { ar: 1, bus: 1 });
+      d.wire([d.flag(12, 173, 'bk'), [150, 173]], { ar: 1 });
+      d.wire([[215, 140], [215, 104]], { ar: 1, bus: 1, lab: [223, 122, 'load', 'start'] });
+      d.blk(350, 52, 100, 36, 'comb', 'AES-ENC', 'key K2');
+      d.wire([d.flag(300, 24, 'unit_no'), [400, 24], [400, 52]], { ar: 1, bus: 1 });
+      d.wire([[290, 70], [350, 70]], { ar: 1, bus: 1, lab: [320, 60, 'K2'] });
+      d.blk(480, 52, 88, 36, 'seq', 'T ×α', 'GF(2¹²⁸)', null, 1);
+      d.wire([[450, 70], [480, 70]], { ar: 1, bus: 1 });
+      d.wire([[568, 70], [588, 70], [588, 36], [524, 36], [524, 52]], { ar: 1, bus: 1 });
+      var x1 = d.xor(330, 220), x2 = d.xor(524, 220);
+      d.wire([[524, 88], x2.t], { bus: 1, dots: [[524, 180]], lab: [532, 140, 'T_j', 'start'] });
+      d.wire([[524, 180], [330, 180], x1.t], { bus: 1 });
+      d.blk(370, 202, 100, 36, 'comb', 'AES-ENC', 'key K1');
+      d.wire([[290, 94], [306, 94], [306, 160], [420, 160], [420, 202]], { ar: 1, bus: 1, lab: [363, 150, 'K1'] });
+      d.wire([d.flag(12, 220, 'P[127:0]'), x1.l], { bus: 1 });
+      d.wire([x1.o, [370, 220]], { bus: 1 });
+      d.wire([[470, 220], x2.l], { bus: 1 });
+      d.wire([x2.o, [556, 220]], { bus: 1 }); d.flag(556, 220, 'C[127:0]');
+      return d.done('XTS 내부 회로');
+    },
+    host: function () {
+      var d = Sheet(640, 236);
+      var rows = [
+        [24, 'completions', 'P-K budget (SW)', 'Eq. 6–10', 'BK_SAFE', '[7:0]', 'BK_SAFE[7:0]'],
+        [98, 'n_ij', 'DTMC σ_h (SW)', 'Eq. 1–2', 'SIGMA_LT_HALF', '1 bit', 'sigma_lt_half'],
+        [172, 'completions', 'Queue accounting (SW)', 'device backlog', 'BACKLOG_US', '[15:0]', 'backlog_us[15:0]']
+      ];
+      rows.forEach(function (r) {
+        var y = r[0] + 22;
+        d.blk(130, r[0], 170, 44, 'ext', r[2], r[3]);
+        d.blk(340, r[0] + 2, 130, 40, 'seq', r[4], r[5], null, 1);
+        d.wire([d.flag(12, y, r[1]), [130, y]], { ar: 1, dash: 1 });
+        d.wire([[300, y], [340, y]], { ar: 1 });
+        d.wire([[470, y], [505, y]]); d.flag(505, y, r[6]);
+      });
+      return d.done('HOST SW가 쓰는 레지스터');
+    }
+  };
+
+  /* ---- module descriptions ---- */
+  var M = {
+    in: {
+      mod: 'IN', name: '배치 입력', kind: 'seq', cat: '레지스터', ref: '§3 · §7',
+      lead: '애플리케이션 배치와 재배치(relocation) 배치 중 하나를 골라 레지스터에 싣습니다. 재배치 쓰기가 애플리케이션 쓰기와 같은 배치 경로를 타게 만드는 지점입니다.',
+      eq: ['batch = rel_vld ? rel : app', 'in_rdy = ¬vld + admit', 'in_rdy이면 BATCH_REG ← batch'],
+      sig: [['app{len,c}', '11', 'in', '애플리케이션 배치. len은 4 KiB 단위 수(8–128), c는 기밀 등급'], ['rel{len,c}', '11', 'in', 'Reclaim FSM이 내는 재배치 배치. len = 64 (256 KiB)'], ['rel_vld', '1', 'in', '재배치 배치가 대기 중'], ['vld', '1', 'out', '레지스터에 아직 배치되지 않은 배치가 있음'], ['len', '8', 'out', '배치 길이'], ['c', '3', 'out', '배치의 기밀 등급']],
+      note: '재배치 배치를 먼저 고르는 중재는 이 설계의 가정입니다. 논문은 재배치가 같은 정책으로 배치된다고만 하고 두 쓰기 사이의 순서는 정하지 않습니다. 길이를 4 KiB XTS 단위 수로 세는 것도 가정입니다.'
+    },
+    keyep: {
+      mod: 'KEYEP', name: '키 epoch 파일', kind: 'seq', cat: '레지스터 + 조합 논리', ref: '§3 · §8.1',
+      lead: '등급마다 그 키로 쓴 양을 세고, 24 MiB(6144 단위)에 닿으면 키 epoch을 올립니다. 등급과 epoch을 붙인 값이 배치의 key domain입니다.',
+      eq: ['sum = ROT_CNT[c] + len', 'rot = (sum ≥ 6144)', 'ROT_CNT[c] ← rot ? 0 : sum', 'KEY_EP[c] ← KEY_EP[c] + rot', 'kd_b = {c, KEY_EP[c]}', '두 테이블은 admit = 1일 때만 갱신'],
+      sig: [['c', '3', 'in', '배치의 기밀 등급. 두 테이블의 주소'], ['len', '8', 'in', '배치 길이'], ['e', '8', 'out', '이 등급의 현재 키 epoch'], ['rot', '1', 'out', '이 배치에서 키 교체가 일어남']],
+      note: 'Epoch 폭 8비트는 가정입니다. 같은 값으로 되돌아오려면 그 등급이 6 GiB(256 × 24 MiB)를 써야 하는데, 그 등급에 묶여 열려 있는 64 MiB 존은 같은 등급의 쓰기로 그 전에 가득 찹니다. 교체 순간에 넘친 양은 버립니다.'
+    },
+    ztbl: {
+      mod: 'ZTBL', name: 'open 존 테이블', kind: 'seq', cat: '레지스터 파일', ref: '§3 · §8.1',
+      lead: 'Open 존 14개(MOR)의 상태를 담는 레지스터 파일입니다. 모든 슬롯을 한꺼번에 읽어 MATCH로 보내고, 선택된 슬롯 하나만 다시 씁니다.',
+      eq: ['slot = {zid[7:0], st[2:0], wp[14:0], bnd, kd[10:0]}', '슬롯당 38비트 × 14 = 532비트', 'wr_en이면 OPEN_ZONE[sel] ← wr'],
+      sig: [['sel', '4', 'in', '쓸 슬롯 번호'], ['wr{st,wp,bnd,kd}', '30', 'in', 'ZUPD가 계산한 새 값'], ['wr_en', '1', 'in', 'admit일 때 1'], ['wp_i', '15 ×14', 'out', '슬롯별 write pointer'], ['bnd_i, kd_i', '12 ×14', 'out', '슬롯별 바인딩 여부와 key domain'], ['st_i', '3 ×14', 'out', '슬롯별 존 상태']],
+      note: 'st는 스케줄링에 쓰는 다섯 상태(ZSE, ZSIO, ZSEO, ZSC, ZSF)를 3비트로 담습니다. 논문 설정에서는 ZSE, ZSIO, ZSF만 나타납니다. bnd = 0은 reset 뒤 아직 첫 append가 없어서 key domain이 정해지지 않았다는 뜻입니다. Finish된 존은 wp = 16384로 기록되어 어떤 배치도 들어가지 않습니다.'
+    },
+    match: {
+      mod: 'MATCH', name: '슬롯 비교 (×14)', kind: 'comb', cat: '조합 논리', ref: '§6.3',
+      lead: '배치를 open 존 14개와 동시에 비교해서, 배치 규칙의 네 단계에 해당하는 슬롯을 비트 벡터로 냅니다. 아래 회로가 슬롯마다 하나씩, 모두 14개 있습니다.',
+      eq: ['fit_i = (wp_i + len ≤ 16384)', 'ceq = (cls_i == c),  eeq = (ep_i == e)', 't1_i = fit_i · bnd_i · ceq · eeq', 't2_i = fit_i · ¬bnd_i', 't3_i = fit_i · bnd_i · ceq · ¬eeq', 't4_i = fit_i'],
+      sig: [['wp_i', '15', 'in', '슬롯의 write pointer'], ['len', '8', 'in', '배치 길이'], ['cls_i, ep_i', '3, 8', 'in', '슬롯에 묶인 key domain'], ['c, e', '3, 8', 'in', '배치의 key domain'], ['bnd_i', '1', 'in', '슬롯이 key domain에 묶여 있음'], ['t1_i … t4_i', '1', 'out', '이 슬롯이 단계 1–4의 후보임']],
+      note: 't1은 같은 key domain(경계 0), t2는 아직 묶이지 않은 존(경계 0), t3은 같은 등급의 이전 epoch(경계 1), t4는 들어가기만 하면 되는 존입니다. Epoch은 올라가기만 하므로 "다르다"가 곧 "이전"입니다.'
+    },
+    sel: {
+      mod: 'SEL', name: '단계 선택', kind: 'comb', cat: '조합 논리', ref: '§6.3',
+      lead: '네 벡터 중 가장 높은 단계에서 슬롯 하나를 고릅니다. 앞의 세 단계는 priority encoder로, 마지막 단계는 write pointer가 가장 작은 슬롯을 찾는 비교기 트리로 고릅니다.',
+      eq: ['tier = t1≠0 ? 0 : t2≠0 ? 1 : t3≠0 ? 2 : 3', 'sel = {idx1, idx2, idx3, idx4}[tier]', 'idx4 = argmin wp_i   (t4_i = 1인 슬롯 중)', 'hit = vld · (t4 ≠ 0)', 'bk = tier[1] · hit'],
+      sig: [['t1 … t4', '14', 'in', 'MATCH가 낸 단계별 후보 벡터'], ['wp_i', '15 ×14', 'in', '가장 덜 찬 존을 찾는 데 사용'], ['sel', '4', 'out', '고른 슬롯 번호'], ['tier', '2', 'out', '고른 단계 (0–3)'], ['bk', '1', 'out', '이 배치가 키 경계를 하나 만듦'], ['hit', '1', 'out', '유효한 배치가 있고 들어갈 open 존이 있음']],
+      note: '경계는 단계 3과 4에서만 생기므로 bk는 tier의 상위 비트에 hit을 곱한 값입니다. 단계 4까지 내려왔다면 그 존은 다른 등급에 묶여 있습니다. 같은 단계 안에서 번호가 낮은 슬롯을 고르는 것은 가정이고, 논문은 단계 안의 순서를 정하지 않습니다.'
+    },
+    admit: {
+      mod: 'ADMIT', name: 'B_k 예산과 승인', kind: 'seq', cat: '레지스터 + 조합 논리', ref: '§5 · §6.2 · §6.3',
+      lead: 'Epoch 동안 생긴 키 경계 수를 세어, 호스트가 써 넣은 예산 BK_SAFE와 비교합니다. 예산을 넘는 경계는 막지 않고 위반으로 기록합니다.',
+      eq: ['BK_ACC ← epoch_tick ? 0 : BK_ACC + bk   (255에서 포화)', 'viol = bk · (BK_ACC ≥ BK_SAFE)', 'admit = hit · res_ok'],
+      sig: [['bk', '1', 'in', '이 배치가 만드는 키 경계'], ['epoch_tick', '1', 'in', '2 ms마다 한 번. 누적기를 지움'], ['BK_SAFE', '8', 'in', '호스트 소프트웨어가 계산한 예산'], ['hit, res_ok', '1, 1', 'in', '배치 가능 여부와 자원 검사 결과'], ['viol', '1', 'out', '예산을 넘는 경계가 발생함'], ['admit', '1', 'out', '이 배치의 append를 내보냄']],
+      note: 'bk = 1이라는 것은 배치가 들어갈 존 가운데 경계 없는 존(단계 1, 2)이 이미 없다는 뜻입니다. 그래서 논문의 "경계 없는 존으로 재배치"는 회로에서 따로 찾을 필요가 없고, 위반 기록만 남습니다. 예산을 epoch 합계로 세는 것은 §5의 security invariant를 따랐습니다. 논문 설정에서는 이 예산이 실제로 걸린 적이 없습니다.'
+    },
+    zupd: {
+      mod: 'ZUPD', name: '존 갱신', kind: 'comb', cat: '조합 논리', ref: '§3 · §5',
+      lead: '선택된 슬롯의 write pointer, 상태, key domain을 계산해서 ZTBL에 다시 씁니다. 더 쓸 수 없게 된 존은 finish하고, Full이 된 슬롯은 free pool의 빈 존으로 교체합니다.',
+      eq: ['wp_n = wp_s + len', 'fin = (wp_n > 16376)', 'wp′ = fin ? 16384 : wp_n', 'st′ = fin ? ZSF : ZSIO', 'kd′ = kd_b,  bnd′ = 1', 'refill = zsf_any · (FREE_CNT ≠ 0)', 'miss = vld · ¬(t4 ≠ 0)', 'seal = miss · ¬zsf_any'],
+      sig: [['wp_s, st_s', '15, 3', 'in', '선택된 슬롯의 현재 값'], ['len', '8', 'in', '배치 길이'], ['kd_b', '11', 'in', '배치의 key domain'], ['zsf_any', '1', 'in', 'Full 상태인 슬롯이 있음'], ['free_avail', '1', 'in', 'free pool에 빈 존이 있음'], ['miss', '1', 'in', '유효한 배치가 어느 슬롯에도 들어가지 않음'], ['wp′, st′, kd′', '15, 3, 11', 'out', 'ZTBL에 쓸 새 값'], ['fin', '1', 'out', '이번 append 뒤 존을 finish함'], ['refill', '1', 'out', 'Full 슬롯 하나를 빈 존으로 교체'], ['seal', '1', 'out', '가장 많이 찬 슬롯을 finish함']],
+      note: 'fin은 존에 남은 공간이 가장 작은 배치(8단위)보다 작아졌다는 뜻이고, 이때 존을 finish해서 write pointer를 끝으로 보냅니다. 배치가 어느 슬롯에도 들어가지 않으면(seal) 가장 많이 찬 슬롯을 finish하고, 배치는 다음 사이클에 다시 시도합니다. 두 finish 규칙과 다음 사이클 교체는 RTL로 구현하면서 추가한 설계 가정입니다. 논문은 존을 봉인하는 규칙을 구체적으로 적지 않습니다.'
+    },
+    res: {
+      mod: 'RES', name: 'MOR/MAR 검사', kind: 'comb', cat: '조합 논리', ref: '§2.1 · §5',
+      lead: '슬롯 상태에서 open 존 수와 active 존 수를 세어 자원 한도와 비교합니다.',
+      eq: ['open_cnt = Σ (st_i ∈ {ZSIO, ZSEO})', 'act_cnt = Σ (st_i ∈ {ZSIO, ZSEO, ZSC})', 'res_ok = (open_cnt ≤ 14) · (act_cnt ≤ 32)'],
+      sig: [['st_i', '3 ×14', 'in', '슬롯별 존 상태'], ['open_cnt', '4', '내부', 'open 상태 슬롯 수'], ['act_cnt', '4', '내부', 'active 상태 슬롯 수'], ['res_ok', '1', 'out', '두 한도를 모두 지킴']],
+      note: '슬롯이 14개뿐이라 이 설계에서는 두 비교가 구조상 항상 참이고, 이 블록은 검사기 역할만 합니다. 논문도 이 설정에서 MAR이 걸리지 않는다고 밝힙니다. 존을 닫아 open 자원을 돌려받는 호스트라면 닫힌 존 카운터를 act_cnt에 더해야 MAR 비교가 의미를 가집니다.'
+    },
+    recl: {
+      mod: 'RECL', name: '회수 게이트와 FSM', kind: 'seq', cat: '레지스터 + 조합 논리 + FSM', ref: '§4 · §7 · §8.1',
+      lead: '빈 존 수를 두 문턱값과 비교해 reset을 낼지 정하고, 회수 순서를 FSM으로 돌립니다. 예측 신호 σ_h는 호스트가 계산한 1비트만 받습니다.',
+      eq: ['lo = (FREE_CNT < 32),  force = (FREE_CNT ≤ 5)', 'busy = (backlog_us > 4000)', 'defer = busy · sigma_lt_half · ¬force', 'reset_go = force + lo · ¬defer', 'FSM: PICK → COPY → RESET'],
+      sig: [['FREE_CNT', '9', '내부', '빈 존 수. reset에서 +1, refill에서 −1'], ['backlog_us', '16', 'in', '장치 backlog 추정값 (µs)'], ['sigma_lt_half', '1', 'in', 'σ_h < 1/2'], ['reset_go', '1', 'out', '회수를 시작함'], ['rel{64,c}', '11', 'out', '재배치 배치. IN으로 되돌아감'], ['zone_reset', '1', 'out', '대상 zid와 함께 장치로 나가는 reset 명령'], ['free_zid', '8', 'out', 'ZUPD가 슬롯을 다시 채울 때 쓰는 빈 존 번호']],
+      note: '32와 5는 N_z/8과 N_z/48입니다. N_z = 256이면 N_z/48은 5.33이므로 "미만"이 5 이하가 됩니다. 하한선 아래에서는 예측과 상관없이 reset하도록 force가 defer를 누릅니다. FREE_CNT는 한 번도 쓰지 않은 존 수와 reset되어 돌아온 존 FIFO의 항목 수를 더한 값입니다. PICK은 ZONE_RAM 256항목에서 live가 가장 적은 Full 존을 찾는 단계이고, 그 탐색 회로는 블록으로만 표시했습니다.'
+    },
+    xts: {
+      mod: 'XTS', name: 'AES-XTS 엔진', kind: 'seq', cat: '레지스터 + 조합 논리', ref: '§6.1 · IEEE 1619',
+      lead: 'Open 존 슬롯마다 키 컨텍스트(K1, K2 라운드 키)를 두고, 배치가 슬롯의 key domain을 바꿀 때만 키 확장을 다시 돌립니다. 이 재확장에 걸리는 시간이 서비스 모델의 τ_sw입니다.',
+      eq: ['bk = 1이면 KEY_CTX[sel] ← expand(kd_b)', 'T_0 = AES_K2(unit_no)', 'T_{j+1} = T_j ⊗ α   (GF(2¹²⁸))', 'C_j = AES_K1(P_j ⊕ T_j) ⊕ T_j', '4 KiB 단위 하나 = 블록 256개'],
+      sig: [['sel', '4', 'in', '쓸 슬롯. 키 컨텍스트의 주소'], ['kd_b', '11', 'in', '배치의 key domain'], ['bk', '1', 'in', '키 확장을 다시 돌림'], ['unit_no', '128', 'in', 'XTS 데이터 단위 번호 (트윅 입력)'], ['P', '128', 'in', '평문 블록'], ['C', '128', 'out', '암호문 블록']],
+      note: '논문의 모델은 존에 묶인 domain이 바뀔 때만 τ_sw를 부과하고, 빈 존의 첫 바인딩은 0으로 셉니다. 이 회로는 그 정의를 그대로 따랐습니다. 실제 엔진에서 첫 바인딩의 키 로드가 공짜인지, 키 캐시가 존 단위인지는 하드웨어마다 다르고, 논문도 τ_sw를 측정하지 못한 상수로 둡니다. AES 라운드 내부는 그리지 않았습니다.'
+    },
+    host: {
+      mod: 'HOST SW', name: '소프트웨어가 쓰는 레지스터', kind: 'ext', cat: '호스트 소프트웨어', ref: '§4 · §6.2',
+      lead: '제곱근과 나눗셈이 들어가는 예산 계산과, 행렬 거듭제곱이 필요한 σ_h 계산은 호스트 소프트웨어에 두고 결과만 레지스터에 써 넣습니다. 회로는 그 값을 비교하기만 합니다.',
+      eq: ['BK_SAFE ← ⌊min(B_k^util, B_k^tail)⌋', 'SIGMA_LT_HALF ← (σ_h < 1/2)', 'BACKLOG_US ← 장치 backlog 추정값'],
+      sig: [['completions', '-', 'in', '완료 타임스탬프. λ와 σ_S² 추정에 사용'], ['n_ij', '-', 'in', '관측된 존 상태 전이 횟수'], ['BK_SAFE', '8', 'out', 'ADMIT의 비교 기준'], ['sigma_lt_half', '1', 'out', 'RECL의 연기 조건'], ['backlog_us', '16', 'out', 'RECL의 연기 조건']],
+      note: 'Epoch이 2 ms이므로 이 값들은 2 ms에 한 번만 바뀝니다. 배치마다 도는 비교 경로와 주기가 달라서 하드웨어로 옮길 이유가 없다고 판단했습니다. 논문의 SMT 검사기도 같은 이유로 회로에 넣지 않았습니다.'
+    }
+  };
+  var ORDER = ['in', 'keyep', 'match', 'sel', 'admit', 'xts', 'ztbl', 'zupd', 'res', 'recl', 'host'];
+
+  var top = document.getElementById('top');
+  var panel = document.getElementById('panel');
+  var chips = document.getElementById('chips');
+  top.innerHTML = topSheet();
+  var hits = Array.prototype.slice.call(top.querySelectorAll('.hit'));
+  var edges = Array.prototype.slice.call(top.querySelectorAll('[data-parts]'));
+
+  function related(id) {
+    var out = [];
+    edges.forEach(function (e) {
+      var parts = e.getAttribute('data-parts').split(' ');
+      if (parts.indexOf(id) === -1) return;
+      parts.forEach(function (p) { if (p !== id && out.indexOf(p) === -1) out.push(p); });
+    });
+    return ORDER.filter(function (p) { return out.indexOf(p) !== -1; });
+  }
+
+  function sheet(id) {
+    var m = M[id];
+    var h = '<div class="head"><div class="meta"><span class="cat cat-' + m.kind + '">' + esc(m.cat) + '</span><span class="ref">' + esc(m.ref) + '</span></div>' +
+      '<h2><span class="mod">' + esc(m.mod) + '</span> · ' + esc(m.name) + '</h2><p class="lead">' + esc(m.lead) + '</p></div>';
+    h += '<div class="cols"><div class="col">' +
+      '<div class="sec"><h3>내부 회로</h3><div class="sheet sub">' + SH[id]() + '</div></div>' +
+      '<div class="sec"><h3>논리식</h3><div class="eqs" tabindex="0">' + m.eq.map(function (e) { return '<div class="eq">' + esc(e) + '</div>'; }).join('') + '</div></div>' +
+      '</div><div class="col">' +
+      '<div class="sec"><h3>신호</h3><div class="tbl"><table><thead><tr><th>신호</th><th>폭</th><th>방향</th><th>설명</th></tr></thead><tbody>' +
+      m.sig.map(function (r) { return '<tr><td class="s">' + esc(r[0]) + '</td><td class="n">' + esc(r[1]) + '</td><td class="n">' + esc(r[2]) + '</td><td class="d">' + esc(r[3]) + '</td></tr>'; }).join('') +
+      '</tbody></table></div></div>' +
+      '<div class="note"><h3>설계 가정과 주의</h3><p>' + esc(m.note) + '</p></div>';
+    var rel = related(id);
+    if (rel.length) {
+      h += '<div class="sec"><h3>연결된 블록</h3><div class="rel">' +
+        rel.map(function (r) { return '<button type="button" data-go="' + r + '">' + esc(M[r].mod) + '</button>'; }).join('') + '</div></div>';
+    }
+    return h + '</div></div>';
+  }
+
+  function select(id, fromUser) {
+    if (!M[id]) return;
+    hits.forEach(function (g) {
+      var on = g.getAttribute('data-id') === id;
+      g.classList.toggle('is-on', on);
+      g.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    edges.forEach(function (e) {
+      e.classList.toggle('is-rel', e.getAttribute('data-parts').split(' ').indexOf(id) !== -1);
+    });
+    Array.prototype.forEach.call(chips.children, function (c) {
+      c.setAttribute('aria-pressed', c.getAttribute('data-go') === id ? 'true' : 'false');
+    });
+    panel.innerHTML = sheet(id);
+    try { history.replaceState(null, '', '#' + id); } catch (e) {}
+    if (fromUser) {
+      var r = panel.getBoundingClientRect();
+      if (r.top > window.innerHeight * 0.75) {
+        var calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        panel.scrollIntoView({ block: 'start', behavior: calm ? 'auto' : 'smooth' });
+      }
+    }
+  }
+
+  chips.innerHTML = ORDER.map(function (id) {
+    return '<button type="button" class="chip" id="chip-' + id + '" data-go="' + id + '" aria-pressed="false">' + esc(M[id].mod) + '</button>';
+  }).join('');
+
+  hits.forEach(function (g) {
+    g.addEventListener('click', function () { select(g.getAttribute('data-id'), true); });
+    g.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); select(g.getAttribute('data-id'), true); }
+    });
+  });
+  chips.addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-go]');
+    if (b) select(b.getAttribute('data-go'), false);
+  });
+  panel.addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-go]');
+    if (b) select(b.getAttribute('data-go'), false);
+  });
+
+  /* ---- application: waveform and scenario table drawn from the simulator trace ---- */
+  var TRACE = [{"cyc":0,"vld":0,"acc":0,"rf":0},{"cyc":1,"vld":1,"c":3,"len":16,"e":0,"rot":0,"tier":2,"sel":0,"bk":0,"viol":0,"fin":0,"wp":16,"zid":0,"acc":0,"rf":0},{"cyc":2,"vld":1,"c":3,"len":16,"e":0,"rot":0,"tier":1,"sel":0,"bk":0,"viol":0,"fin":0,"wp":32,"zid":0,"acc":0,"rf":0},{"cyc":3,"vld":1,"c":5,"len":24,"e":0,"rot":0,"tier":2,"sel":1,"bk":0,"viol":0,"fin":0,"wp":24,"zid":1,"acc":0,"rf":0},{"cyc":4,"vld":1,"c":1,"len":8,"e":0,"rot":0,"tier":2,"sel":2,"bk":0,"viol":0,"fin":0,"wp":8,"zid":2,"acc":0,"rf":0},{"cyc":5,"vld":1,"c":6,"len":8,"e":0,"rot":0,"tier":2,"sel":3,"bk":0,"viol":0,"fin":0,"wp":8,"zid":3,"acc":0,"rf":0},{"cyc":6,"vld":1,"c":3,"len":16,"e":0,"rot":1,"tier":1,"sel":0,"bk":0,"viol":0,"fin":0,"wp":48,"zid":0,"acc":0,"rf":0},{"cyc":7,"vld":1,"c":3,"len":8,"e":1,"rot":0,"tier":3,"sel":0,"bk":1,"viol":0,"fin":0,"wp":56,"zid":0,"acc":0,"rf":0},{"cyc":8,"vld":1,"c":7,"len":16,"e":0,"rot":0,"tier":4,"sel":2,"bk":1,"viol":1,"fin":0,"wp":24,"zid":2,"acc":1,"rf":0},{"cyc":9,"vld":1,"c":3,"len":8,"e":1,"rot":0,"tier":1,"sel":0,"bk":0,"viol":0,"fin":1,"wp":64,"zid":0,"acc":2,"rf":0},{"cyc":10,"vld":1,"c":5,"len":32,"e":0,"rot":1,"tier":1,"sel":1,"bk":0,"viol":0,"fin":0,"wp":56,"zid":1,"acc":2,"rf":1,"old":0,"new":4},{"cyc":11,"vld":1,"c":5,"len":16,"e":1,"rot":0,"tier":2,"sel":0,"bk":0,"viol":0,"fin":0,"wp":16,"zid":4,"acc":2,"rf":0},{"cyc":12,"vld":0,"acc":2,"rf":0},{"cyc":13,"vld":0,"acc":2,"rf":0}];
+  var NOTES = {
+    1: '모든 슬롯이 비어 있음. 슬롯 0을 차지',
+    2: '슬롯 0이 같은 key domain',
+    3: '새 등급. 빈 슬롯 1을 차지',
+    4: '빈 슬롯 2를 차지',
+    5: '빈 슬롯 3을 차지. 이제 빈 슬롯이 없음',
+    6: '등급 3의 누적이 48로 40을 넘어 키 교체(rot)',
+    7: '등급 3의 epoch이 1이 됨. 슬롯 0은 epoch 0에 묶여 있어 경계 1',
+    8: '등급 7은 묶인 슬롯도 빈 슬롯도 없음. 가장 덜 찬 슬롯 2로. BK_ACC가 예산 1에 닿아 있어 위반 기록',
+    9: '슬롯 0이 64단위에 닿아 finish',
+    10: '같은 사이클에 Full 슬롯 0을 존 4로 교체. 등급 5 키 교체',
+    11: '슬롯 1은 56 + 16 > 64라 안 들어감. 방금 채운 빈 슬롯 0으로'
+  };
+  (function () {
+    var N = TRACE.length, L = 78, CW = 56, RH = 26, T = 24;
+    var rows = [['clk', 'clk'], ['vld', 'bit', 'vld'], ['c', 'bus', 'c'], ['len', 'bus', 'len'], ['e', 'bus', 'e'], ['tier', 'bus', 'tier'], ['sel', 'bus', 'sel'],
+      ['bk', 'bit', 'bk', 1], ['viol', 'bit', 'viol', 1], ['bk_acc', 'all', 'acc'], ['rot', 'bit', 'rot'], ['fin', 'bit', 'fin'], ['refill', 'bit', 'rf']];
+    var W = L + N * CW + 10, H = T + rows.length * RH + 6, s = [], k;
+    function t(x, y, v, c, a) { s.push('<text class="' + c + '" x="' + x + '" y="' + y + '" text-anchor="' + (a || 'middle') + '" dominant-baseline="central">' + esc(v) + '</text>'); }
+    for (k = 0; k <= N; k++) s.push('<line class="wg" x1="' + (L + k * CW) + '" y1="' + (T - 4) + '" x2="' + (L + k * CW) + '" y2="' + (H - 4) + '"/>');
+    for (k = 0; k < N; k++) t(L + k * CW + CW / 2, 10, TRACE[k].cyc, 'wc');
+    t(8, 10, 'cycle', 'wc', 'start');
+    rows.forEach(function (r, ri) {
+      var y0 = T + ri * RH, yh = y0 + 5, yl = y0 + RH - 5, ym = y0 + RH / 2, d = '', x, v;
+      t(8, ym, r[0], 'wl', 'start');
+      if (r[1] === 'clk') {
+        for (k = 0; k < N; k++) { x = L + k * CW; d += (k ? 'V' + yh : 'M' + x + ' ' + yh) + 'H' + (x + CW / 2) + 'V' + yl + 'H' + (x + CW); }
+        s.push('<path class="ws" d="' + d + '"/>');
+      } else if (r[1] === 'bit') {
+        for (k = 0; k < N; k++) { x = L + k * CW; v = TRACE[k][r[2]] ? yh : yl; d += (k ? 'V' + v : 'M' + x + ' ' + v) + 'H' + (x + CW); }
+        s.push('<path class="ws' + (r[3] ? ' hi' : '') + '" d="' + d + '"/>');
+      } else {
+        for (k = 0; k < N; k++) {
+          x = L + k * CW;
+          if (r[1] === 'all' || TRACE[k].vld) {
+            s.push('<polygon class="wb' + (r[1] === 'all' ? ' st' : '') + '" points="' + (x + 5) + ',' + yh + ' ' + (x + CW - 5) + ',' + yh + ' ' + (x + CW) + ',' + ym + ' ' + (x + CW - 5) + ',' + yl + ' ' + (x + 5) + ',' + yl + ' ' + x + ',' + ym + '"/>');
+            v = TRACE[k][r[2]]; t(x + CW / 2, ym, r[2] === 'tier' ? 'T' + v : v, 'wt');
+          } else s.push('<path class="ws" d="M' + x + ' ' + ym + 'H' + (x + CW) + '"/>');
+        }
+      }
+    });
+    document.getElementById('wave').innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="시나리오 시뮬레이션 파형. 아래 표에 같은 값이 있습니다.">' + s.join('') + '</svg>';
+    document.getElementById('scn').innerHTML = TRACE.filter(function (r) { return r.vld; }).map(function (r) {
+      return '<tr><td class="n">' + r.cyc + '</td><td class="n">' + r.c + '</td><td class="n">' + r.len + '</td><td class="n">' + r.e + '</td><td class="n">' + r.tier +
+        '</td><td class="n">' + r.sel + ' (존 ' + r.zid + ')</td><td class="n">' + r.wp + '</td><td class="n">' + r.bk + '</td><td class="n">' + r.viol + '</td><td class="d">' + esc(NOTES[r.cyc] || '') + '</td></tr>';
+    }).join('');
+  })();
+
+  var start = 'match';
+  try { var hsh = (location.hash || '').slice(1); if (M[hsh]) start = hsh; } catch (e) {}
+  select(start, false);
+})();
+</script>
+</body>
+</html>
