@@ -269,10 +269,11 @@ main { overflow-x: clip; }
   .hstats { grid-template-columns: minmax(0, 1fr); }
   .kb .row { grid-template-columns: minmax(0, 1fr) minmax(0, 80px); }
 }
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; }
-  #fx { display: none; }
-}
+/* "calm" = the viewer's system asks for reduced motion and they have not switched motion back on */
+html.calm *, html.calm *::before, html.calm *::after { animation: none !important; transition: none !important; }
+html.calm #fx { display: none; }
+.mo { border-color: var(--red); }
+@media (max-width: 900px) { .fs.mo { display: inline-block; } }
 </style>
 </head>
 <body>
@@ -284,6 +285,7 @@ main { overflow-x: clip; }
       <a href="#rules">전제</a><a href="#tail">꼬리 지연</a><a href="#wa">쓰기 증폭</a><a href="#util">이용률</a><a href="#reset">리셋</a><a href="#crypto">암호화</a><a href="#axis">새 축</a><a href="#summary">종합</a>
     </div>
     <span class="count" id="count"><b>01</b> / 09</span>
+    <button class="fs mo" id="mo" type="button" hidden>모션 켜기</button>
     <button class="fs" id="fs" type="button">전체화면</button>
   </div>
   <div class="progress"><i id="prog"></i></div>
@@ -549,7 +551,22 @@ main { overflow-x: clip; }
 
 <script>
 (() => {
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /* Respect the system's reduced-motion setting, but let the presenter switch motion back on. */
+  const sysReduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let forced = location.hash === '#motion';
+  try { if (localStorage.getItem('xlo-motion') === 'on') forced = true; } catch (e) {}
+  const reduce = sysReduce && !forced;
+  document.documentElement.classList.toggle('calm', reduce);
+  const mo = document.getElementById('mo');
+  if (sysReduce) {
+    mo.hidden = false;
+    mo.textContent = forced ? '모션 끄기' : '모션 켜기';
+    mo.addEventListener('click', () => {
+      try { localStorage.setItem('xlo-motion', forced ? 'off' : 'on'); } catch (e) {}
+      history.replaceState(null, '', location.pathname + location.search + (forced ? '' : '#motion'));
+      location.reload();
+    });
+  }
   const slides = [...document.querySelectorAll('.slide')];
   const navLinks = [...document.querySelectorAll('.links a')];
   const count = document.getElementById('count');
