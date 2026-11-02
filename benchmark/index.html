@@ -1,0 +1,739 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="XLO-ZNS 수치를 선행연구 16편의 헤드라인 수치와 비교하는 9장짜리 웹 프레젠테이션. 스크롤·방향키·스페이스로 넘깁니다.">
+<style>html{-webkit-text-size-adjust:100%}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>XLO-ZNS Benchmark Reel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&family=Kaushan+Script&display=swap">
+<style>
+/* Layout: a cinematic scroll reel. One full-screen section per slide, headline left / evidence right,
+   a fixed site-style nav, one red accent, condensed display type, sections replay their entrance when reached. */
+:root {
+  color-scheme: dark;
+  --ink: #0B0B0C;          /* stage */
+  --panel: #141416;        /* raised surface */
+  --line: #26262B;         /* hairlines, tracks */
+  --text: #EEEDEB;         /* primary ink */
+  --muted: #8C8B93;        /* secondary ink */
+  --red: #E8302F;          /* the one accent; also the XLO-ZNS series */
+  --red-deep: #6E1214;     /* red card shadow end */
+  --context: #7A7A82;      /* prior-work series, deliberately neutral */
+  --display: "Anton", "Black Han Sans", "Arial Narrow", Impact, sans-serif;
+  --display-ko: "Black Han Sans", "Anton", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  --body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --script: "Kaushan Script", "Brush Script MT", cursive;
+  --ease: cubic-bezier(.16,.84,.24,1);
+  --navh: 64px;
+}
+html { scroll-snap-type: y proximity; scroll-behavior: auto; background: var(--ink); }
+body {
+  background: var(--ink); color: var(--text); font-family: var(--body); font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  overflow-x: hidden; -webkit-font-smoothing: antialiased;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 60; background: var(--ink); }
+body::after { /* film grain */
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 40; opacity: .07; mix-blend-mode: screen;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+::selection { background: var(--red); color: var(--text); }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; border-radius: 2px; }
+
+/* ---------- nav ---------- */
+.nav {
+  position: fixed; top: env(safe-area-inset-top, 0px); left: 0; right: 0; z-index: 50;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: linear-gradient(var(--ink) 55%, rgba(11,11,12,0));
+}
+.nav-in { max-width: 1440px; margin: 0 auto; height: var(--navh); display: flex; align-items: center; gap: 24px; padding-inline: clamp(0px, 3vw, 40px); }
+.logo { font-family: var(--display); font-size: 22px; letter-spacing: .02em; text-decoration: none; display: flex; align-items: center; gap: 6px; }
+.logo i { width: 8px; height: 8px; border-radius: 50%; background: var(--red); display: inline-block; transform: translateY(-1px); }
+.links { display: flex; gap: 22px; margin-left: auto; font-size: 13px; color: var(--muted); }
+.links a { text-decoration: none; padding: 4px 0; transition: color .2s; }
+.links a:hover, .links a.on { color: var(--text); }
+.links a.on { box-shadow: 0 2px 0 var(--red); }
+.count { font-family: var(--mono); font-size: 12px; color: var(--muted); letter-spacing: .08em; font-variant-numeric: tabular-nums; min-width: 64px; text-align: right; }
+.count b { color: var(--text); font-weight: 500; }
+.fs { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; color: var(--text); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+.fs:hover { border-color: var(--red); }
+.progress { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; background: var(--line); opacity: .6; }
+.progress i { display: block; height: 100%; width: 0; background: var(--red); transition: width .4s var(--ease); }
+
+/* ---------- slide frame ---------- */
+main { overflow-x: clip; }
+.slide { position: relative; min-height: 100svh; scroll-snap-align: start; display: flex; align-items: center; padding-block: calc(var(--navh) + 28px) 48px; }
+.wrap { position: relative; width: 100%; max-width: 1440px; margin: 0 auto; padding-inline: clamp(0px, 3vw, 40px); }
+.kicker { font-family: var(--mono); font-size: 12px; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; margin: 0 0 18px; }
+.kicker b { color: var(--red); font-weight: 700; }
+.hl { font-family: var(--display-ko); font-weight: 400; font-size: clamp(34px, 3.5vw, 62px); line-height: 1.06; letter-spacing: -.005em; margin: 0 0 28px; text-wrap: balance; }
+.hl .ln { display: block; overflow: hidden; padding-block: .05em .07em; }
+.hl .ln > span { display: inline-block; }
+.red { color: var(--red); }
+.lede { color: var(--muted); max-width: 46ch; margin: 0; font-size: 15.5px; }
+.lede strong { color: var(--text); font-weight: 500; }
+.src { position: absolute; left: clamp(0px, 3vw, 40px); right: clamp(0px, 3vw, 40px); bottom: -34px; font-size: 11.5px; color: var(--muted); opacity: .8; line-height: 1.5; }
+.split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(32px, 5vw, 88px); align-items: start; }
+.big { font-family: var(--display); font-size: clamp(64px, 8vw, 132px); line-height: .92; letter-spacing: .005em; margin: 8px 0 6px; font-variant-numeric: tabular-nums; }
+.big small { font-size: .45em; }
+.big-cap { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--muted); margin: 0 0 22px; }
+.stats2 { display: flex; gap: 40px; flex-wrap: wrap; margin-bottom: 22px; }
+.stats2 .big { font-size: clamp(56px, 6vw, 104px); }
+
+/* ---------- bar chart ---------- */
+.chart { min-width: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 12.5px; color: var(--muted); margin: 6px 0 22px; }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.sw { width: 14px; height: 10px; border-radius: 2px; display: inline-block; }
+.sw.x { background: var(--red); } .sw.p { background: var(--context); }
+.sw.w { background: repeating-linear-gradient(135deg, var(--red) 0 2px, transparent 2px 5px); box-shadow: inset 0 0 0 1.5px var(--red); }
+.grp { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 18px 0 8px; display: flex; align-items: center; gap: 12px; }
+.grp::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.rows { display: grid; gap: 4px; }
+.row { display: grid; grid-template-columns: minmax(0, 210px) minmax(0, 1fr) minmax(0, 150px); align-items: center; gap: 18px; padding: 9px 0; border-bottom: 1px solid rgba(38,38,43,.6); cursor: default; }
+.row:hover { background: linear-gradient(90deg, rgba(232,48,47,.06), transparent 70%); }
+.who { min-width: 0; }
+.who b { display: block; font-weight: 500; font-size: 15px; line-height: 1.3; }
+.who b.me { color: var(--text); }
+.who b.me::before { content: ""; display: inline-block; width: 6px; height: 6px; background: var(--red); border-radius: 50%; margin-right: 8px; transform: translateY(-2px); }
+.who small { display: block; color: var(--muted); font-size: 12px; line-height: 1.35; }
+.track { position: relative; height: 14px; }
+.track .zero { position: absolute; top: -8px; bottom: -8px; width: 1px; background: var(--muted); opacity: .5; }
+.bar { position: absolute; top: 0; height: 14px; }
+.bar.pos { border-radius: 0 4px 4px 0; transform-origin: left center; }
+.bar.neg { border-radius: 4px 0 0 4px; transform-origin: right center; }
+.bar.x { background: var(--red); }
+.bar.p { background: var(--context); }
+.bar.w { background: repeating-linear-gradient(135deg, var(--red) 0 2px, transparent 2px 6px); box-shadow: inset 0 0 0 1.5px var(--red); }
+.val { font-family: var(--display); font-size: 21px; letter-spacing: .01em; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.val em { font-style: normal; font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; color: var(--red); border: 1px solid var(--red); border-radius: 999px; padding: 2px 7px; margin-right: 8px; vertical-align: 3px; }
+.axis { display: grid; grid-template-columns: minmax(0, 210px) minmax(0, 1fr) minmax(0, 150px); gap: 18px; font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .06em; margin-top: 10px; }
+.axis .ax { display: flex; justify-content: space-between; }
+
+/* ---------- hero ---------- */
+#intro .wrap { min-height: calc(100svh - var(--navh) - 76px); display: flex; flex-direction: column; justify-content: center; }
+.giant {
+  position: absolute; left: 50%; top: 4%; transform: translateX(-50%); z-index: 0; pointer-events: none;
+  font-family: var(--display); font-size: clamp(56px, 17.6vw, 300px); line-height: .86; letter-spacing: -.005em; white-space: nowrap; color: var(--red);
+  -webkit-mask-image: linear-gradient(180deg, #000 30%, rgba(0,0,0,.18) 92%); mask-image: linear-gradient(180deg, #000 30%, rgba(0,0,0,.18) 92%);
+}
+.hero { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.05fr) auto minmax(0, .8fr); gap: clamp(24px, 4vw, 72px); align-items: end; margin-top: clamp(80px, 13vw, 210px); }
+.hello { font-family: var(--script); font-size: clamp(30px, 3vw, 46px); line-height: 1; margin: 0 0 4px; transform: rotate(-4deg); transform-origin: left bottom; display: inline-block; }
+.name { font-family: var(--display); font-size: clamp(64px, 8.2vw, 140px); line-height: .9; margin: 0; letter-spacing: .005em; }
+.role { font-family: var(--display); color: var(--red); font-size: clamp(18px, 1.6vw, 26px); line-height: 1.1; letter-spacing: .03em; margin: 14px 0 14px; }
+.hero .lede { font-size: 15px; max-width: 40ch; }
+.cta { display: inline-flex; align-items: center; gap: 12px; margin-top: 22px; background: var(--red); color: var(--text); text-decoration: none; font-weight: 700; font-size: 14px; padding: 12px 18px; border-radius: 2px; }
+.cta:hover { background: #c9201f; }
+.zones { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.zcols { display: flex; gap: 6px; height: clamp(200px, 26vw, 330px); align-items: flex-end; }
+.zcol { width: clamp(9px, 1vw, 15px); height: 100%; background: var(--panel); border-radius: 3px; position: relative; overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); }
+.zcol i { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 3px 3px 0 0; transform-origin: bottom; }
+.zcap { font-family: var(--mono); font-size: 10.5px; color: var(--muted); letter-spacing: .12em; text-align: center; }
+.hstats { display: grid; gap: 18px; justify-items: end; text-align: right; }
+.hstat .n { font-family: var(--display); font-size: clamp(36px, 3.6vw, 60px); line-height: 1; color: var(--red); font-variant-numeric: tabular-nums; }
+.hstat .t { font-size: 12.5px; color: var(--muted); }
+.byline { position: relative; z-index: 1; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 40px; font-family: var(--mono); font-size: 11.5px; color: var(--muted); letter-spacing: .08em; }
+
+/* ---------- rules (timeline) ---------- */
+.tl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin-top: 44px; border-top: 1px solid var(--line); }
+.tl > div { position: relative; padding: 30px 28px 6px 0; }
+.tl > div::before { content: ""; position: absolute; top: -5px; left: 0; width: 9px; height: 9px; background: var(--red); border-radius: 50%; }
+.tl .k { font-family: var(--display); color: var(--red); font-size: 44px; line-height: 1; }
+.tl h3 { font-family: var(--display-ko); font-weight: 400; font-size: 26px; margin: 12px 0 14px; line-height: 1.2; }
+.tl p { margin: 0 0 10px; font-size: 14.5px; color: var(--muted); max-width: 38ch; }
+.tl p b { color: var(--text); font-weight: 500; display: block; font-size: 11px; font-family: var(--mono); letter-spacing: .1em; margin-bottom: 2px; }
+.tl p.me b { color: var(--red); }
+.tl p.me { color: var(--text); }
+
+/* ---------- util: other weight class ---------- */
+.heavy { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 26px; }
+.heavy div { border-top: 1px solid var(--line); padding-top: 12px; }
+.heavy .n { font-family: var(--display); font-size: clamp(30px, 3vw, 46px); line-height: 1; }
+.heavy .t { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+/* ---------- reset: unmeasured axes ---------- */
+.journey { position: relative; padding-left: 30px; display: grid; gap: 26px; }
+.journey::before { content: ""; position: absolute; left: 6px; top: 6px; bottom: 6px; width: 2px; background: var(--red); transform-origin: top; }
+.journey > div { position: relative; }
+.journey > div::before { content: ""; position: absolute; left: -30px; top: 8px; width: 14px; height: 14px; border-radius: 50%; background: var(--ink); box-shadow: inset 0 0 0 2px var(--red); }
+.journey .lab { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; color: var(--muted); }
+.journey .n { font-family: var(--display); font-size: clamp(40px, 4vw, 64px); line-height: 1; margin: 4px 0; }
+.journey .t { font-size: 14px; color: var(--muted); max-width: 44ch; }
+
+/* ---------- crypto ---------- */
+.tracks { display: grid; gap: 26px; }
+.trk-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+.trk-head b { font-weight: 500; font-size: 17px; }
+.trk-head .pct { font-family: var(--display); font-size: clamp(34px, 3.4vw, 54px); line-height: 1; font-variant-numeric: tabular-nums; }
+.trk-sub { font-family: var(--mono); font-size: 11.5px; color: var(--muted); margin: 2px 0 10px; letter-spacing: .03em; }
+.trk { height: 14px; background: var(--line); border-radius: 4px; position: relative; overflow: hidden; }
+.trk i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--red); border-radius: 4px; transform-origin: left; }
+.redcard {
+  position: relative; border-radius: 6px; padding: clamp(24px, 3vw, 40px); overflow: hidden;
+  background: linear-gradient(155deg, #B71F20 0%, #8C1617 45%, var(--red-deep) 100%);
+  box-shadow: 0 30px 80px rgba(232,48,47,.18);
+}
+.redcard .sig { font-family: var(--script); font-size: clamp(34px, 3.2vw, 50px); line-height: 1; margin: 0 0 22px; transform: rotate(-4deg); display: inline-block; }
+.redcard .lab { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; color: rgba(255,235,232,.75); text-transform: uppercase; }
+.redcard .n { font-family: var(--display); font-size: clamp(48px, 4.6vw, 76px); line-height: 1; margin: 6px 0 4px; }
+.redcard .t { font-size: 13.5px; color: rgba(255,240,238,.85); max-width: 40ch; }
+.redcard hr { border: 0; border-top: 1px solid rgba(255,255,255,.22); margin: 22px 0; }
+.redcard .foot { font-size: 14.5px; font-weight: 500; }
+
+/* ---------- new axis ---------- */
+.laurel { display: flex; align-items: center; gap: 4px; margin: 4px 0 4px -8px; }
+.laurel svg { width: clamp(46px, 4.4vw, 70px); height: auto; flex: none; }
+.laurel .big { margin: 0; color: var(--text); }
+.kb { display: grid; gap: 12px; margin: 18px 0 20px; max-width: 520px; }
+.kb .row { grid-template-columns: minmax(0, 120px) minmax(0, 1fr) minmax(0, 80px); padding: 4px 0; border: 0; }
+.plot { background: var(--panel); border-radius: 6px; padding: clamp(18px, 2.4vw, 32px); box-shadow: inset 0 0 0 1px var(--line); }
+.plot h4 { margin: 0 0 4px; font-family: var(--mono); font-weight: 500; font-size: 12px; letter-spacing: .12em; color: var(--muted); text-transform: uppercase; }
+.plot svg { width: 100%; height: auto; display: block; overflow: visible; }
+.plot .note { font-size: 12.5px; color: var(--muted); margin: 10px 0 0; }
+.gridl { stroke: var(--line); stroke-width: 1; }
+.tick { fill: var(--muted); font-family: var(--mono); font-size: 12px; }
+.lab-l { fill: var(--text); font-family: var(--body); font-size: 13px; font-weight: 500; }
+.ln-p { stroke: var(--context); stroke-width: 2.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.ln-x { stroke: var(--red); stroke-width: 2.5; fill: none; stroke-linecap: round; }
+.pt { stroke: var(--panel); stroke-width: 2; }
+.hit { fill: transparent; cursor: default; }
+
+/* ---------- summary ---------- */
+.sumhl { font-family: var(--display-ko); font-size: clamp(38px, 5vw, 86px); line-height: 1.04; margin: 0 0 40px; font-weight: 400; text-wrap: balance; }
+.sumhl .ln { display: block; overflow: hidden; padding-block: .05em .07em; }
+.sumhl .ln > span { display: inline-block; }
+.sum { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(0, 1.1fr); gap: clamp(20px, 2.6vw, 40px); align-items: stretch; }
+.col h3 { font-family: var(--mono); font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; margin: 0 0 10px; display: flex; align-items: center; gap: 10px; color: var(--muted); font-weight: 500; }
+.col h3::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--c, var(--muted)); }
+.col ul { list-style: none; margin: 0; padding: 0; display: grid; }
+.col li { border-top: 1px solid var(--line); padding: 14px 0; }
+.col li b { display: block; font-family: var(--display); font-size: clamp(24px, 2.2vw, 34px); font-weight: 400; line-height: 1.05; letter-spacing: .01em; }
+.col li span { font-size: 12.5px; color: var(--muted); }
+.next .n { font-family: var(--display); font-size: clamp(40px, 3.8vw, 64px); line-height: .95; margin: 2px 0 14px; }
+
+/* ---------- tooltip & fx ---------- */
+#tip { position: fixed; z-index: 70; pointer-events: none; max-width: 280px; background: #1C1C1F; color: var(--text); font-size: 12.5px; line-height: 1.45; padding: 9px 11px; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,.5), inset 0 0 0 1px var(--line); opacity: 0; transition: opacity .12s; }
+#tip.on { opacity: 1; }
+#fx { position: fixed; inset: 0; pointer-events: none; z-index: 45; }
+.hint { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; color: var(--muted); }
+
+/* ---------- entrance motion (only while a section plays; content is fully visible at rest) ---------- */
+@keyframes rise { from { transform: translateY(112%); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(22px); } }
+@keyframes growX { from { transform: scaleX(0); } }
+@keyframes growY { from { transform: scaleY(0); } }
+@keyframes giant { from { opacity: 0; transform: translate(-50%, 9%); letter-spacing: .06em; } }
+@keyframes draw { from { stroke-dashoffset: var(--len); } }
+@keyframes pop { from { opacity: 0; transform: scale(.4); } }
+.play .ln > span { animation: rise 1s var(--ease) both; animation-delay: calc(140ms + var(--i, 0) * 110ms); }
+.play .fx-up { animation: fadeUp .9s var(--ease) both; animation-delay: var(--d, .35s); }
+.play .bar, .play .trk i { animation: growX 1.1s var(--ease) both; animation-delay: calc(.45s + var(--i, 0) * 70ms); }
+.play .zcol i { animation: growY 1.2s var(--ease) both; animation-delay: calc(.5s + var(--i, 0) * 55ms); }
+.play .giant { animation: giant 1.5s var(--ease) both; }
+.play .journey::before { animation: growY 1.3s var(--ease) both .35s; }
+.play .draw { stroke-dasharray: var(--len); animation: draw 1.6s var(--ease) both .55s; }
+.play .pt { animation: pop .5s var(--ease) both; animation-delay: calc(1.2s + var(--i, 0) * 80ms); transform-box: fill-box; transform-origin: center; }
+.play .hello { animation: fadeUp .9s var(--ease) both .1s; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 1100px) {
+  .links { display: none; }
+  .count { margin-left: auto; }
+  .sum { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  :root { --navh: 56px; }
+  .fs { display: none; }
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .hero { grid-template-columns: minmax(0, 1fr); align-items: start; margin-top: 30vw; }
+  .zones { order: 3; align-items: flex-start; }
+  .hstats { justify-items: start; text-align: left; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tl { grid-template-columns: minmax(0, 1fr); }
+  .heavy { grid-template-columns: minmax(0, 1fr); }
+  .src { position: static; margin-top: 28px; }
+  .slide { padding-block: calc(var(--navh) + 24px) 40px; }
+}
+@media (max-width: 560px) {
+  .row, .axis { grid-template-columns: minmax(0, 1fr) minmax(0, 96px); gap: 6px 12px; }
+  .row .track, .axis .ax { grid-column: 1 / -1; grid-row: 2; }
+  .axis span:first-child, .axis span:last-child { display: none; }
+  .val { font-size: 18px; }
+  .val em { display: none; }
+  .sum { grid-template-columns: minmax(0, 1fr); }
+  .hstats { grid-template-columns: minmax(0, 1fr); }
+  .kb .row { grid-template-columns: minmax(0, 1fr) minmax(0, 80px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  #fx { display: none; }
+}
+</style>
+</head>
+<body>
+
+<nav class="nav" aria-label="슬라이드">
+  <div class="nav-in">
+    <a class="logo" href="#intro">XLO-ZNS<i></i></a>
+    <div class="links">
+      <a href="#rules">전제</a><a href="#tail">꼬리 지연</a><a href="#wa">쓰기 증폭</a><a href="#util">이용률</a><a href="#reset">리셋</a><a href="#crypto">암호화</a><a href="#axis">새 축</a><a href="#summary">종합</a>
+    </div>
+    <span class="count" id="count"><b>01</b> / 09</span>
+    <button class="fs" id="fs" type="button">전체화면</button>
+  </div>
+  <div class="progress"><i id="prog"></i></div>
+</nav>
+
+<main>
+
+<!-- 01 HERO -->
+<section class="slide" id="intro" aria-label="표지">
+  <div class="wrap">
+    <div class="giant" aria-hidden="true">BENCHMARK</div>
+    <div class="hero">
+      <div>
+        <span class="hello">Hello, this is</span>
+        <h1 class="name">XLO-ZNS.</h1>
+        <p class="role">ENCRYPTION-AWARE<br>ZONE PLACEMENT</p>
+        <p class="lede">기존 ZNS 연구 대비 <strong>어디서 같고, 어디서 약하고, 어디서 새로운가.</strong> 같은 지표를 선행연구 16편의 헤드라인 수치와 나란히 놓았습니다.</p>
+        <a class="cta" href="#rules">비교 시작 <span aria-hidden="true">↓</span></a>
+      </div>
+      <figure class="zones fx-up" style="--d:.3s" aria-label="열린 존 14개, 존마다 한 키 도메인으로 채워진 모습" data-tip="MOR = 14개 열린 존. XLO-ZNS는 존 하나를 키 도메인 하나에 묶어 키 교체를 없앱니다.">
+        <div class="zcols" id="zcols"></div>
+        <figcaption class="zcap">14 OPEN ZONES · 존마다 키 도메인 하나</figcaption>
+      </figure>
+      <div class="hstats">
+        <div class="hstat fx-up" style="--d:.55s"><div class="n"><span class="cnt" data-to="210">210</span>×</div><div class="t">키 경계 교차 감소</div></div>
+        <div class="hstat fx-up" style="--d:.7s"><div class="n"><span class="cnt" data-to="34">34</span>%</div><div class="t">암호화 비용 회수</div></div>
+        <div class="hstat fx-up" style="--d:.85s"><div class="n"><span class="cnt" data-to="16">16</span>×</div><div class="t">τsw 스윕에도 P99 평탄</div></div>
+      </div>
+    </div>
+    <div class="byline"><span>이현창 · 전남대학교 · 2026.10</span><span class="hint">↓ 스크롤 · 방향키 · 스페이스</span></div>
+  </div>
+</section>
+
+<!-- 02 RULES -->
+<section class="slide" id="rules" aria-label="비교 전제">
+  <div class="wrap">
+    <p class="kicker"><b>00</b> / Before we compare</p>
+    <h2 class="hl" style="font-size:clamp(38px,5vw,86px)"><span class="ln" style="--i:0"><span>숫자를 바로</span></span><span class="ln" style="--i:1"><span class="red">비교하지 말 것.</span></span></h2>
+    <p class="lede fx-up" style="--d:.45s;max-width:64ch">이후 그래프는 정확한 우열이 아니라 <strong>규모(자릿수) 비교</strong>로 읽어 주세요.</p>
+    <div class="tl">
+      <div class="fx-up" style="--d:.55s"><div class="k">01</div><h3>비교 기준이 다르다</h3><p><b>PRIOR WORK</b>블록 SSD · 정적 존 인터페이스 대비</p><p class="me"><b>XLO-ZNS</b>ZNS용 스케줄러(Secure-Naive) 대비, 존 수명주기까지 동일</p></div>
+      <div class="fx-up" style="--d:.7s"><div class="k">02</div><h3>최대값 vs 평균</h3><p><b>PRIOR WORK</b>헤드라인은 대부분 "최대 ~배"</p><p class="me"><b>XLO-ZNS</b>운영점 load 0.30에서 8 seed 평균, 95% 신뢰구간</p></div>
+      <div class="fx-up" style="--d:.85s"><div class="k">03</div><h3>실측 vs 시뮬레이션</h3><p><b>PRIOR WORK</b>실제 장치 · 에뮬레이터</p><p class="me"><b>XLO-ZNS</b>NVMe ZNS Rev 1.2 상태기계를 따르는 이산사건 시뮬레이터</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 TAIL -->
+<section class="slide" id="tail" aria-label="꼬리 지연">
+  <div class="wrap">
+    <div class="split">
+      <div>
+        <p class="kicker"><b>01</b> / Tail latency</p>
+        <h2 class="hl"><span class="ln" style="--i:0"><span>꼬리 지연은</span></span><span class="ln" style="--i:1"><span class="red">가장 약한 지점.</span></span></h2>
+        <div class="stats2 fx-up" style="--d:.4s">
+          <div><div class="big">±0</div><p class="big-cap">P99 · 3.58 → 3.60 ms</p></div>
+          <div><div class="big red">+<span class="cnt" data-to="16">16</span><small>%</small></div><p class="big-cap">P99.9 · 4.62 → 5.37 ms · 신뢰구간 비중첩</p></div>
+        </div>
+        <p class="lede fx-up" style="--d:.55s">선행연구가 꼬리를 절반~4분의 1로 줄인 축에서, XLO-ZNS는 중간 부하 P99가 그대로입니다. 이 축에서는 경쟁하지 않고 <strong>eZNS · ZINC 아래에 놓이는 직교 계층</strong>으로 둡니다.</p>
+      </div>
+      <div class="chart">
+        <div class="legend"><span><i class="sw x"></i>XLO-ZNS 개선</span><span><i class="sw w"></i>XLO-ZNS 악화</span><span><i class="sw p"></i>선행연구</span></div>
+        <div class="rows" data-scale="-20,100">
+          <div class="row" data-tip="운영점(load 0.30)에서 P99 3.58 → 3.60 ms. 신뢰구간이 거의 겹쳐 차이 없음."><div class="who"><b class="me">XLO-ZNS · P99</b><small>운영점, vs Secure-Naive</small></div><div class="track"><i class="bar w" data-v="-0.6" style="--i:0"></i></div><div class="val">+0.6%</div></div>
+          <div class="row" data-tip="P99.9 4.62 → 5.37 ms. 신뢰구간이 겹치지 않는 유의한 악화이며 원인은 아직 분석 전."><div class="who"><b class="me">XLO-ZNS · P99.9</b><small>운영점, 신뢰구간 비중첩</small></div><div class="track"><i class="bar w" data-v="-16.2" style="--i:1"></i></div><div class="val"><em>악화</em>+16%</div></div>
+          <div class="row" data-tip="장치 이용률 ≈1.0 부근. Secure-Naive의 P99가 1초를 넘을 때 XLO-ZNS는 약 13 ms."><div class="who"><b class="me">XLO-ZNS · 포화 부근</b><small>P99, 이용률 1.0 근처</small></div><div class="track"><i class="bar x" data-v="98.7" style="--i:2"></i></div><div class="val">1 s+ → 13 ms</div></div>
+          <div class="row" data-tip="Bjørling et al., USENIX ATC'21. P99.9 랜덤 읽기 지연, 블록 SSD 대비 최소 2–4배 감소(75%로 환산)."><div class="who"><b>ZNS</b><small>ATC'21 · P99.9 읽기 vs 블록 SSD</small></div><div class="track"><i class="bar p" data-v="75" style="--i:3"></i></div><div class="val">2–4× ↓</div></div>
+          <div class="row" data-tip="Min et al., OSDI'23. 정적 존 대비 P99.9 평균 76.3% 개선."><div class="who"><b>eZNS</b><small>OSDI'23 · P99.9 평균 vs 정적 존</small></div><div class="track"><i class="bar p" data-v="76.3" style="--i:4"></i></div><div class="val">−76.3%</div></div>
+          <div class="row" data-tip="Lee et al., PVLDB'23. 꼬리 지연 기하평균 2.19배 감소(54%로 환산)."><div class="who"><b>WALTZ</b><small>PVLDB'23 · 기하평균</small></div><div class="track"><i class="bar p" data-v="54.3" style="--i:5"></i></div><div class="val">2.19× ↓</div></div>
+          <div class="row" data-tip="Jung et al., Electronics'23. 쓰기 전용 워크로드에서 꼬리 지연을 최대 절반으로."><div class="who"><b>Preemptive Reset</b><small>Electronics'23 · 쓰기 꼬리</small></div><div class="track"><i class="bar p" data-v="50" style="--i:6"></i></div><div class="val">최대 −50%</div></div>
+          <div class="row" data-tip="Doekemeijer et al., SYSTOR'24. ZINC가 리셋 간섭을 56.9% 감소."><div class="who"><b>ZINC</b><small>SYSTOR'24 · 리셋 간섭</small></div><div class="track"><i class="bar p" data-v="56.9" style="--i:7"></i></div><div class="val">−56.9%</div></div>
+        </div>
+        <div class="axis"><span></span><span class="ax"><span>← 악화</span><span>감소율 (%) · 개선 →</span></span><span></span></div>
+      </div>
+    </div>
+    <p class="src">출처: Bjørling ATC'21 · Min OSDI'23 · Lee PVLDB'23 · Jung Electronics'23 · Doekemeijer SYSTOR'24. XLO-ZNS는 load 0.30, 8 seed 평균.</p>
+  </div>
+</section>
+
+<!-- 04 WA -->
+<section class="slide" id="wa" aria-label="쓰기 증폭">
+  <div class="wrap">
+    <div class="split">
+      <div>
+        <p class="kicker"><b>02</b> / Write amplification</p>
+        <h2 class="hl"><span class="ln" style="--i:0"><span>쓰기 증폭은</span></span><span class="ln" style="--i:1"><span class="red">같은 자릿수.</span></span></h2>
+        <div class="big fx-up" style="--d:.4s">−<span class="cnt" data-to="3.1" data-dec="1">3.1</span><small>%</small></div>
+        <p class="big-cap fx-up" style="--d:.45s">WA 2.451 → 2.375 · 8 seed 평균</p>
+        <p class="lede fx-up" style="--d:.55s">같은 계열인 CAZA는 <strong>최대</strong> −7.4%. 2.375는 72% 점유율과 호스트 compaction을 포함한 값이고, 감소의 부호는 기밀 클래스와 데이터 수명의 상관에 의존합니다.</p>
+      </div>
+      <div class="chart">
+        <div class="legend"><span><i class="sw x"></i>XLO-ZNS</span><span><i class="sw p"></i>선행연구</span></div>
+        <div class="grp">같은 계열 · 수명 분리 배치</div>
+        <div class="rows" data-scale="0,80">
+          <div class="row" data-tip="같은 존 수명주기에서 WA 2.451 → 2.375."><div class="who"><b class="me">XLO-ZNS</b><small>평균 · vs Secure-Naive</small></div><div class="track"><i class="bar x" data-v="3.1" style="--i:0"></i></div><div class="val">−3.1%</div></div>
+          <div class="row" data-tip="Lee et al., HotStorage'22. ZenFS(LIZA) 대비 Greedy zone cleaning에서 최대 7.4% 낮은 WA."><div class="who"><b>CAZA</b><small>HotStorage'22 · vs LIZA</small></div><div class="track"><i class="bar p" data-v="7.4" style="--i:1"></i></div><div class="val">최대 −7.4%</div></div>
+          <div class="row" data-tip="ASP-DAC'24 OAZA. WA 1.3(LIZA) → 1.1, 약 15% 감소로 환산."><div class="who"><b>OAZA</b><small>ASP-DAC'24 · vs LIZA</small></div><div class="track"><i class="bar p" data-v="15.4" style="--i:2"></i></div><div class="val">1.3 → 1.1</div></div>
+        </div>
+        <div class="grp">다른 계층 · 인터페이스·장치 변경</div>
+        <div class="rows" data-scale="0,80">
+          <div class="row" data-tip="Bjørling et al., ATC'21. RocksDB WA: F2FS 2.4 → ZNS 1.0 (58%로 환산)."><div class="who"><b>ZNS</b><small>ATC'21 · vs F2FS on 블록 SSD</small></div><div class="track"><i class="bar p" data-v="58.3" style="--i:3"></i></div><div class="val">2.4 → 1.0</div></div>
+          <div class="row" data-tip="FDP CacheLib 기본 설정. 장치 WAF 1.3 → 약 1 (23%로 환산)."><div class="who"><b>FDP CacheLib · 기본</b><small>FMS'24 · 장치 WAF</small></div><div class="track"><i class="bar p" data-v="23" style="--i:4"></i></div><div class="val">1.3 → ~1.0</div></div>
+          <div class="row" data-tip="FDP CacheLib 100% 이용률. 장치 WAF 3.5 → 약 1 (71%로 환산)."><div class="who"><b>FDP CacheLib · 고이용률</b><small>EuroSys'25 · 100% 이용률</small></div><div class="track"><i class="bar p" data-v="71.4" style="--i:5"></i></div><div class="val">3.5 → ~1.0</div></div>
+        </div>
+        <div class="axis"><span></span><span class="ax"><span>0</span><span>WA 감소율 (%) →</span></span><span></span></div>
+      </div>
+    </div>
+    <p class="src">출처: Lee HotStorage'22 (CAZA) · ASP-DAC'24 OAZA · Bjørling ATC'21 · George FMS'24 / Allison EuroSys'25. 1.3→1.1은 15%, 2.4→1.0은 58%, 3.5→1.0은 71%로 환산.</p>
+  </div>
+</section>
+
+<!-- 05 UTIL -->
+<section class="slide" id="util" aria-label="장치 이용률">
+  <div class="wrap">
+    <div class="split">
+      <div>
+        <p class="kicker"><b>03</b> / Device utilization</p>
+        <h2 class="hl"><span class="ln" style="--i:0"><span>장치 이용률은</span></span><span class="ln" style="--i:1"><span class="red">스케줄러급과 동급.</span></span></h2>
+        <div class="big fx-up" style="--d:.4s">−<span class="cnt" data-to="8.0" data-dec="1">8.0</span><small>%</small></div>
+        <p class="big-cap fx-up" style="--d:.45s">장치 이용률 0.738 → 0.679</p>
+        <p class="lede fx-up" style="--d:.55s">같은 부하를 더 적은 장치 작업으로 처리합니다. 처리량 증가와 이용률 감소는 <strong>방향이 다른 지표</strong>라 규모만 비교합니다.</p>
+      </div>
+      <div class="chart">
+        <div class="legend"><span><i class="sw x"></i>XLO-ZNS</span><span><i class="sw p"></i>선행연구 · 스케줄러급</span></div>
+        <div class="rows" data-scale="0,55">
+          <div class="row" data-tip="같은 offered load에서 측정 장치 이용률 0.738 → 0.679."><div class="who"><b class="me">XLO-ZNS</b><small>장치 이용률 절감</small></div><div class="track"><i class="bar x" data-v="8" style="--i:0"></i></div><div class="val">−8.0%</div></div>
+          <div class="row" data-tip="Min et al., OSDI'23 발표. YCSB 처리량 평균 9.5% 증가."><div class="who"><b>eZNS · 평균</b><small>YCSB 처리량 vs 정적 존</small></div><div class="track"><i class="bar p" data-v="9.5" style="--i:1"></i></div><div class="val">+9.5%</div></div>
+          <div class="row" data-tip="Lee et al., PVLDB'23. QPS 최대 11.7% 증가."><div class="who"><b>WALTZ</b><small>QPS · 최대</small></div><div class="track"><i class="bar p" data-v="11.7" style="--i:2"></i></div><div class="val">최대 +11.7%</div></div>
+          <div class="row" data-tip="Min et al., OSDI'23. RocksDB 처리량 최대 17.7% 증가."><div class="who"><b>eZNS · 최대</b><small>RocksDB 처리량 vs 정적 존</small></div><div class="track"><i class="bar p" data-v="17.7" style="--i:3"></i></div><div class="val">최대 +17.7%</div></div>
+          <div class="row" data-tip="Liu et al., ACM TACO'25. 순차 접근에서 I/O 대역폭 49.24% 이상 증가."><div class="who"><b>ZNSFQ</b><small>TACO'25 · 순차 대역폭</small></div><div class="track"><i class="bar p" data-v="49.2" style="--i:4"></i></div><div class="val">+49.2%</div></div>
+        </div>
+        <div class="axis"><span></span><span class="ax"><span>0</span><span>개선 폭 (%) →</span></span><span></span></div>
+        <div class="grp">다른 체급 · 인터페이스 자체를 바꾼 연구</div>
+        <div class="heavy">
+          <div class="fx-up" style="--d:.9s"><div class="n">2×</div><div class="t">ZNS · 쓰기 처리량 vs 블록 SSD</div></div>
+          <div class="fx-up" style="--d:1s"><div class="n">1.33–2.91×</div><div class="t">ZNS+ · FS 성능 vs 일반 ZNS</div></div>
+          <div class="fx-up" style="--d:1.1s"><div class="n">33.44×</div><div class="t">Z-LFS · 최대, vs F2FS</div></div>
+        </div>
+      </div>
+    </div>
+    <p class="src">출처: Min OSDI'23 · Lee PVLDB'23 · Liu ACM TACO'25 (ZNSFQ) · Bjørling ATC'21 · Han OSDI'21 · Hwang ATC'25.</p>
+  </div>
+</section>
+
+<!-- 06 RESET -->
+<section class="slide" id="reset" aria-label="존 리셋과 기타 축">
+  <div class="wrap">
+    <div class="split">
+      <div>
+        <p class="kicker"><b>04</b> / Zone resets &amp; beyond</p>
+        <h2 class="hl"><span class="ln" style="--i:0"><span>리셋은 부수 효과,</span></span><span class="ln" style="--i:1"><span class="red">나머진 결합 대상.</span></span></h2>
+        <div class="chart" style="margin-top:6px">
+          <div class="legend"><span><i class="sw x"></i>XLO-ZNS</span><span><i class="sw p"></i>선행연구</span></div>
+          <div class="rows" data-scale="0,12">
+            <div class="row" data-tip="측정 구간 존 리셋 482 → 468회."><div class="who"><b class="me">XLO-ZNS</b><small>측정 구간</small></div><div class="track"><i class="bar x" data-v="2.9" style="--i:0"></i></div><div class="val">−2.9%</div></div>
+            <div class="row" data-tip="ASP-DAC'24 OAZA. LIZA · CAZA 대비 존 리셋 10% 감소."><div class="who"><b>OAZA</b><small>vs LIZA · CAZA</small></div><div class="track"><i class="bar p" data-v="10" style="--i:1"></i></div><div class="val">−10%</div></div>
+          </div>
+          <div class="axis"><span></span><span class="ax"><span>0</span><span>리셋 감소율 (%) →</span></span><span></span></div>
+        </div>
+        <p class="lede fx-up" style="--d:.7s;margin-top:22px">배치가 존을 채우는 순서를 바꾼 부산물이라, 리셋 감소를 목표로 한 전용 최적화의 <strong>약 1/3</strong>입니다.</p>
+      </div>
+      <div>
+        <p class="kicker" style="margin-top:6px">XLO-ZNS가 재지 않은 축 · 열세가 아니라 결합 후보</p>
+        <div class="journey">
+          <div class="fx-up" style="--d:.55s" data-tip="Byeon et al., HotStorage'23 (FAR)."><div class="lab">FAR · HOTSTORAGE'23 · 수명</div><div class="n">2×</div><div class="t">성능 저하 없이 ZNS SSD 수명을 두 배로.</div></div>
+          <div class="fx-up" style="--d:.7s" data-tip="Woo et al., FAST'21 (D2FQ)."><div class="lab">D2FQ · FAST'21 · CPU</div><div class="n">−45%</div><div class="t">공정성을 유지하면서 MQFQ 대비 CPU 사용 감소.</div></div>
+          <div class="fx-up" style="--d:.85s" data-tip="Liu et al., IEEE TCAD (Fair-ZNS)."><div class="lab">FAIR-ZNS · IEEE TCAD · 공정성</div><div class="n">8.3× ↓</div><div class="t">평균 대기 시간 감소. 공정성 2.3배 향상, 최대 slowdown 5.1배 감소.</div></div>
+        </div>
+      </div>
+    </div>
+    <p class="src">출처: ASP-DAC'24 OAZA · Byeon HotStorage'23 · Woo FAST'21 · Liu IEEE TCAD.</p>
+  </div>
+</section>
+
+<!-- 07 CRYPTO -->
+<section class="slide" id="crypto" aria-label="암호화 오버헤드">
+  <div class="wrap">
+    <div class="split">
+      <div>
+        <p class="kicker"><b>05</b> / Encryption overhead</p>
+        <h2 class="hl"><span class="ln" style="--i:0"><span>암호화 비용 1/3을</span></span><span class="ln" style="--i:1"><span class="red">배치만으로 회수.</span></span></h2>
+        <div class="legend"><span><i class="sw x"></i>회수한 몫</span><span><i class="sw" style="background:var(--line)"></i>남은 암호화 비용 (Base → Naive = 100%)</span></div>
+        <div class="tracks">
+          <div data-tip="(0.79 − 0.67) / (0.79 − 0.44) ≈ 34%"><div class="trk-head"><b>평균 append 지연</b><span class="pct"><span class="cnt" data-to="34">34</span>%</span></div><div class="trk-sub">Base 0.44 · Naive 0.79 · XLO 0.67 ms</div><div class="trk"><i style="width:34.3%;--i:0"></i></div></div>
+          <div data-tip="(0.738 − 0.679) / (0.738 − 0.569) ≈ 35%"><div class="trk-head"><b>장치 이용률</b><span class="pct"><span class="cnt" data-to="35">35</span>%</span></div><div class="trk-sub">Base 0.569 · Naive 0.738 · XLO 0.679</div><div class="trk"><i style="width:34.9%;--i:1"></i></div></div>
+          <div data-tip="XLO-ZNS P99가 Naive보다 0.02 ms 높아 회수 없음으로 표기."><div class="trk-head"><b>P99 append 지연</b><span class="pct red">0%</span></div><div class="trk-sub">Base 2.76 · Naive 3.58 · XLO 3.60 ms</div><div class="trk"></div></div>
+        </div>
+        <p class="big-cap" style="margin-top:18px">회수율 = (Naive − XLO) / (Naive − Base)</p>
+      </div>
+      <div class="redcard fx-up" style="--d:.45s">
+        <span class="sig">orthogonal.</span>
+        <div class="lab">선행연구의 암호화 비용</div>
+        <div data-tip="Daoud & Huen, CATA'22. dm-crypt AES-XTS 512-bit, 4 KB 랜덤 쓰기 단일 job."><div class="n">3.29×</div><div class="t">Daoud &amp; Huen · dm-crypt. 4 KB 랜덤 쓰기 지연 21 → 69 μs, 랜덤 쓰기 처리량 −50%.</div></div>
+        <hr>
+        <div data-tip="Chowdhuryy et al., HPCA'23 (D-Shield)."><div class="n">≤ 6%</div><div class="t">D-Shield · 프로세서측 하드웨어. 무보호 대비 성능 오버헤드, 소프트웨어 방식 대비 최대 17배 빠름.</div></div>
+        <hr>
+        <p class="foot">D-Shield는 암호화 경로를 바꾸고, XLO-ZNS는 같은 경로에서 배치를 바꿉니다. 둘은 함께 쓸 수 있습니다.</p>
+      </div>
+    </div>
+    <p class="src">출처: XLO-ZNS Table 1 · Daoud &amp; Huen CATA'22 · Chowdhuryy HPCA'23.</p>
+  </div>
+</section>
+
+<!-- 08 AXIS -->
+<section class="slide" id="axis" aria-label="선행연구에 없던 축">
+  <div class="wrap">
+    <div class="split">
+      <div>
+        <p class="kicker"><b>06</b> / A new axis</p>
+        <h2 class="hl"><span class="ln" style="--i:0"><span>선행연구에</span></span><span class="ln" style="--i:1"><span class="red">없던 축.</span></span></h2>
+        <div class="laurel fx-up" style="--d:.35s"><svg class="lf" viewBox="0 0 60 120" aria-hidden="true"></svg><div class="big"><span class="cnt" data-to="210">210</span>×</div><svg class="lf flip" viewBox="0 0 60 120" aria-hidden="true"></svg></div>
+        <p class="big-cap">KEY-BOUNDARY CROSSINGS / BATCH ↓</p>
+        <div class="kb rows" data-scale="0,0.8">
+          <div class="row" data-tip="배치당 키 도메인 교차 0.7966회 (±0.0054)."><div class="who"><b>Secure-Naive</b></div><div class="track"><i class="bar p" data-v="0.7966" style="--i:0"></i></div><div class="val">0.7966</div></div>
+          <div class="row" data-tip="배치당 0.0038회 (±0.0001). 존 수명주기는 그대로, 배치 규칙만 변경."><div class="who"><b class="me">XLO-ZNS</b></div><div class="track"><i class="bar x" data-v="0.0038" style="--i:1"></i></div><div class="val">0.0038</div></div>
+        </div>
+        <p class="lede fx-up" style="--d:.6s">막대 길이는 실제 비율입니다. 암호화·키를 인지하는 ZNS 스케줄러는 웹 검색·Perplexity 조사에서 확인되지 않아 <strong>비교할 선행 수치가 없습니다.</strong></p>
+      </div>
+      <div class="plot fx-up" style="--d:.4s">
+        <h4>P99 vs τsw · 키 교차 1회 비용</h4>
+        <div class="legend" style="margin:8px 0 6px"><span><i class="sw x"></i>XLO-ZNS</span><span><i class="sw p"></i>Secure-Naive</span></div>
+        <svg id="tsw" viewBox="0 0 640 360" role="img" aria-label="τsw 2에서 32 μs까지 Secure-Naive의 P99는 3.3에서 5.8 ms로 오르고 XLO-ZNS는 약 3.6 ms로 평탄"></svg>
+        <p class="note">공개된 τsw 측정값이 없어 2–32 μs를 16배 스윕했습니다. 교차점 ≈ 8 μs. 세 지점은 논문 Figure 3 · Table 1 기반 근사입니다.</p>
+      </div>
+    </div>
+    <p class="src">출처: XLO-ZNS Table 1 · Figure 3 · §8.4. 키 교체 비용 측정과 키 인지 ZNS 스케줄러의 부재는 웹 검색 및 Perplexity 조사(2026-10) 기준.</p>
+  </div>
+</section>
+
+<!-- 09 SUMMARY -->
+<section class="slide" id="summary" aria-label="종합">
+  <div class="wrap">
+    <p class="kicker"><b>07</b> / Summary</p>
+    <h2 class="sumhl"><span class="ln" style="--i:0"><span>같은 경기의 1등이 아니라,</span></span><span class="ln" style="--i:1"><span class="red">새 종목을 연다.</span></span></h2>
+    <div class="sum">
+      <div class="col fx-up" style="--d:.45s;--c:var(--text)"><h3>같은 자릿수</h3><ul>
+        <li><b>WA −3.1%</b><span>CAZA 최대 −7.4%</span></li>
+        <li><b>이용률 −8.0%</b><span>eZNS 최대 +17.7%</span></li>
+        <li><b>리셋 −2.9%</b><span>OAZA −10%</span></li></ul></div>
+      <div class="col fx-up" style="--d:.6s;--c:var(--red)"><h3>약한 지점</h3><ul>
+        <li><b>P99 ±0</b><span>선행연구 2–4× ↓</span></li>
+        <li><b>P99.9 +16%</b><span>유의한 악화, 원인 미분석</span></li>
+        <li><b>τsw &lt; 8 μs</b><span>꼬리 지연 이득 사라짐</span></li></ul></div>
+      <div class="col fx-up" style="--d:.75s;--c:var(--context)"><h3>비교 대상 없음</h3><ul>
+        <li><b>Bk 210× ↓</b><span>키 인지 스케줄러 선행 없음</span></li>
+        <li><b>τsw 16× 평탄</b><span>미측정 상수에 둔감</span></li>
+        <li><b>비용 ~1/3 회수</b><span>D-Shield와 직교</span></li></ul></div>
+      <div class="redcard next fx-up" style="--d:.9s">
+        <div class="lab">Next</div>
+        <div class="n">MEASURE<br>IT FOR REAL.</div>
+        <p class="t">Zynq UltraScale+ 보드에서 τsw를 키 캐시 히트·미스로 나눠 실측해, 이 비교를 하드웨어로 옮깁니다.</p>
+        <span class="sig" style="margin:18px 0 0">thank you.</span>
+      </div>
+    </div>
+    <div class="byline" style="margin-top:36px"><span>이현창 · 전남대학교 · 2026.10</span><span>XLO-ZNS 수치: load 0.30, 8 seed 평균 · 선행연구: 각 논문의 헤드라인(대부분 최대값)</span></div>
+  </div>
+</section>
+
+</main>
+
+<div id="tip" role="tooltip"></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const slides = [...document.querySelectorAll('.slide')];
+  const navLinks = [...document.querySelectorAll('.links a')];
+  const count = document.getElementById('count');
+  const prog = document.getElementById('prog');
+
+  /* ---- hero zone columns: one key domain per zone ---- */
+  const fills = [92,78,100,64,88,100,71,95,58,83,100,69,90,76];
+  const tone = ['var(--red)','#EEEDEB','#8C8B93','var(--red)','#4A4A51','#EEEDEB','var(--red)','#8C8B93','#EEEDEB','var(--red)','#4A4A51','#8C8B93','var(--red)','#EEEDEB'];
+  const zc = document.getElementById('zcols');
+  fills.forEach((f, i) => {
+    const c = document.createElement('div'); c.className = 'zcol';
+    const fill = document.createElement('i'); fill.style.height = f + '%'; fill.style.background = tone[i]; fill.style.setProperty('--i', i);
+    c.appendChild(fill); zc.appendChild(c);
+  });
+
+  /* ---- bars: place every bar on its chart's single scale ---- */
+  document.querySelectorAll('.rows[data-scale]').forEach(rows => {
+    const [lo, hi] = rows.dataset.scale.split(',').map(Number);
+    const span = hi - lo, zeroPct = (0 - lo) / span * 100;
+    rows.querySelectorAll('.track').forEach(tr => {
+      if (lo < 0) { const z = document.createElement('i'); z.className = 'zero'; z.style.left = zeroPct + '%'; tr.prepend(z); }
+      const bar = tr.querySelector('.bar'); if (!bar) return;
+      const v = +bar.dataset.v; const w = Math.abs(v) / span * 100;
+      if (v >= 0) { bar.classList.add('pos'); bar.style.left = zeroPct + '%'; bar.style.width = `max(4px, ${w}%)`; }
+      else { bar.classList.add('neg'); bar.style.width = `max(4px, ${w}%)`; bar.style.left = `calc(${zeroPct}% - max(4px, ${w}%))`; }
+    });
+  });
+
+  /* ---- laurels, drawn from rotated leaves ---- */
+  document.querySelectorAll('svg.lf').forEach(svg => {
+    const ns = 'http://www.w3.org/2000/svg';
+    const g = document.createElementNS(ns, 'g');
+    if (svg.classList.contains('flip')) g.setAttribute('transform', 'translate(60 0) scale(-1 1)');
+    const stem = document.createElementNS(ns, 'path');
+    stem.setAttribute('d', 'M46 112 Q14 82 22 18'); stem.setAttribute('fill', 'none'); stem.setAttribute('stroke', '#E8302F'); stem.setAttribute('stroke-width', '2');
+    g.appendChild(stem);
+    for (let k = 0; k < 7; k++) {
+      const t = k / 6, x = 46 - 30 * t + 6 * Math.sin(t * 3), y = 108 - 88 * t;
+      [-1, 1].forEach(side => {
+        const e = document.createElementNS(ns, 'ellipse');
+        e.setAttribute('cx', x + side * 7); e.setAttribute('cy', y); e.setAttribute('rx', 4); e.setAttribute('ry', 9);
+        e.setAttribute('fill', '#E8302F'); e.setAttribute('opacity', side < 0 ? .95 : .7);
+        e.setAttribute('transform', `rotate(${side * 38 + 10} ${x + side * 7} ${y})`);
+        g.appendChild(e);
+      });
+    }
+    svg.appendChild(g);
+  });
+
+  /* ---- τsw line chart, one log2 x-scale and one linear y-scale ---- */
+  (() => {
+    const svg = document.getElementById('tsw'), ns = 'http://www.w3.org/2000/svg';
+    const X0 = 56, X1 = 520, Y0 = 312, Y1 = 28;
+    const px = v => X0 + (Math.log2(v) - 1) / 4 * (X1 - X0);
+    const py = v => Y0 - (v - 3) / 3 * (Y0 - Y1);
+    const el = (t, a, parent = svg) => { const n = document.createElementNS(ns, t); for (const k in a) n.setAttribute(k, a[k]); parent.appendChild(n); return n; };
+    [3, 4, 5, 6].forEach(v => { el('line', { x1: X0, x2: X1, y1: py(v), y2: py(v), class: 'gridl' }); el('text', { x: X0 - 12, y: py(v) + 4, 'text-anchor': 'end', class: 'tick' }).textContent = v.toFixed(1); });
+    [2, 4, 8, 16, 32].forEach(v => { el('text', { x: px(v), y: Y0 + 24, 'text-anchor': 'middle', class: 'tick' }).textContent = v; });
+    el('text', { x: X1, y: Y0 + 46, 'text-anchor': 'end', class: 'tick' }).textContent = 'τsw (μs, log)';
+    el('text', { x: X0 - 12, y: Y1 - 12, 'text-anchor': 'end', class: 'tick' }).textContent = 'P99 ms';
+    el('line', { x1: px(8), x2: px(8), y1: Y1, y2: Y0, stroke: '#8C8B93', 'stroke-dasharray': '3 5', 'stroke-width': 1, opacity: .7 });
+    el('text', { x: px(8) + 8, y: Y1 + 12, class: 'tick' }).textContent = '교차 ≈ 8 μs';
+    const naive = [[2, 3.3], [8, 3.58], [32, 5.8]], xlo = [[2, 3.6], [8, 3.6], [32, 3.6]];
+    const path = (pts, cls) => { const p = el('path', { d: pts.map((q, i) => (i ? 'L' : 'M') + px(q[0]) + ' ' + py(q[1])).join(' '), class: cls + ' draw' }); const L = p.getTotalLength(); p.style.setProperty('--len', L); return p; };
+    path(naive, 'ln-p'); path(xlo, 'ln-x');
+    let i = 0;
+    const dots = (pts, fill, name) => pts.forEach(q => {
+      el('circle', { cx: px(q[0]), cy: py(q[1]), r: 6, fill, class: 'pt', style: `--i:${i++}` });
+      const h = el('circle', { cx: px(q[0]), cy: py(q[1]), r: 16, class: 'hit' });
+      h.dataset.tip = `${name} · τsw ${q[0]} μs → P99 ≈ ${q[1].toFixed(2)} ms`;
+    });
+    dots(naive, '#7A7A82', 'Secure-Naive'); dots(xlo, '#E8302F', 'XLO-ZNS');
+    el('text', { x: px(32) + 12, y: py(5.8) + 5, class: 'lab-l' }).textContent = '5.8 ms';
+    el('text', { x: px(32) + 12, y: py(3.6) + 5, class: 'lab-l' }).textContent = '3.6 ms';
+    el('text', { x: px(2) - 2, y: py(3.3) + 24, class: 'tick' }).textContent = '3.3';
+  })();
+
+  /* ---- counters: final value is the resting text ---- */
+  const runCounters = root => {
+    if (reduce) return;
+    root.querySelectorAll('.cnt').forEach(n => {
+      const to = +n.dataset.to, dec = +(n.dataset.dec || 0), t0 = performance.now(), dur = 1300, delay = 450;
+      const fmt = v => v.toFixed(dec);
+      n.textContent = fmt(0);
+      const tick = now => {
+        const t = Math.min(1, Math.max(0, (now - t0 - delay) / dur));
+        const e = 1 - Math.pow(1 - t, 3);
+        n.textContent = fmt(to * e);
+        if (t < 1) requestAnimationFrame(tick); else n.textContent = fmt(to);
+      };
+      requestAnimationFrame(tick);
+    });
+  };
+
+  /* ---- replay a section's entrance each time it is reached ---- */
+  if (!reduce && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver(entries => entries.forEach(e => {
+      const s = e.target;
+      if (e.isIntersecting) { if (!s.classList.contains('play')) { s.classList.add('play'); runCounters(s); } }
+      else s.classList.remove('play');
+    }), { threshold: 0 });
+    slides.forEach(s => io.observe(s));
+  }
+
+  /* ---- current slide: counter, progress, nav ---- */
+  let cur = 0;
+  const update = () => {
+    const mid = innerHeight * 0.45;
+    let best = 0, bd = Infinity;
+    slides.forEach((s, i) => { const r = s.getBoundingClientRect(); const d = (r.top <= mid && r.bottom >= mid) ? 0 : Math.min(Math.abs(r.top - mid), Math.abs(r.bottom - mid)); if (d < bd) { bd = d; best = i; } });
+    cur = best;
+    count.innerHTML = `<b>${String(cur + 1).padStart(2, '0')}</b> / ${String(slides.length).padStart(2, '0')}`;
+    prog.style.width = ((cur + 1) / slides.length * 100) + '%';
+    navLinks.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + slides[cur].id));
+  };
+  addEventListener('scroll', () => requestAnimationFrame(update), { passive: true });
+  addEventListener('resize', update);
+  update();
+
+  const go = i => { i = Math.max(0, Math.min(slides.length - 1, i)); slides[i].scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); };
+  addEventListener('keydown', e => {
+    if (e.altKey || e.ctrlKey || e.metaKey || /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
+    const k = e.key;
+    if (['ArrowDown', 'ArrowRight', 'PageDown', ' '].includes(k)) { e.preventDefault(); go(cur + 1); }
+    else if (['ArrowUp', 'ArrowLeft', 'PageUp'].includes(k)) { e.preventDefault(); go(cur - 1); }
+    else if (k === 'Home') { e.preventDefault(); go(0); }
+    else if (k === 'End') { e.preventDefault(); go(slides.length - 1); }
+  });
+  document.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener('click', e => {
+    const t = document.getElementById(a.getAttribute('href').slice(1)); if (!t) return;
+    e.preventDefault(); go(slides.indexOf(t));
+  }));
+  document.getElementById('fs').addEventListener('click', () => {
+    const d = document.documentElement;
+    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+    else d.requestFullscreen?.().catch(() => {});
+  });
+
+  /* ---- tooltip ---- */
+  const tip = document.getElementById('tip');
+  let tipFor = null;
+  addEventListener('pointermove', e => {
+    const t = e.target.closest?.('[data-tip]');
+    if (t !== tipFor) { tipFor = t; if (t) { tip.textContent = t.dataset.tip; tip.classList.add('on'); } else tip.classList.remove('on'); }
+    if (t) {
+      const w = tip.offsetWidth, h = tip.offsetHeight;
+      let x = e.clientX + 16, y = e.clientY + 18;
+      if (x + w > innerWidth - 12) x = e.clientX - w - 16;
+      if (y + h > innerHeight - 12) y = e.clientY - h - 14;
+      tip.style.left = x + 'px'; tip.style.top = y + 'px';
+    }
+  }, { passive: true });
+
+  /* ---- cursor arrows: a trail at the pointer and a few drifting strays ---- */
+  if (reduce || !matchMedia('(pointer: fine)').matches) return;
+  const cv = document.getElementById('fx'), ctx = cv.getContext('2d');
+  let W, H, dpr;
+  const size = () => { dpr = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); };
+  size(); addEventListener('resize', size);
+  const parts = [];
+  const strays = Array.from({ length: 9 }, () => ({ x: Math.random() * innerWidth, y: Math.random() * innerHeight, vx: (Math.random() - .5) * .25, vy: (Math.random() - .5) * .25, r: Math.random() * 6.28, s: 7 + Math.random() * 4, a: .22 + Math.random() * .2, red: Math.random() < .25 }));
+  let lastSpawn = 0;
+  addEventListener('pointermove', e => {
+    const now = performance.now();
+    if (now - lastSpawn < 34) return; lastSpawn = now;
+    parts.push({ x: e.clientX, y: e.clientY, vx: (Math.random() - .5) * 1.4, vy: (Math.random() - .5) * 1.4 - .3, r: -0.5 + (Math.random() - .5) * 1.2, vr: (Math.random() - .5) * .05, s: 6 + Math.random() * 5, life: 1, red: Math.random() < .35 });
+    if (parts.length > 60) parts.shift();
+  }, { passive: true });
+  const arrow = (x, y, r, s, col, a) => {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(r); ctx.globalAlpha = a; ctx.fillStyle = col;
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(s * .95, s * .35); ctx.lineTo(s * .4, s * .45); ctx.lineTo(s * .3, s * 1.05); ctx.closePath(); ctx.fill(); ctx.restore();
+  };
+  const loop = () => {
+    ctx.clearRect(0, 0, W, H);
+    strays.forEach(p => { p.x += p.vx; p.y += p.vy; if (p.x < -20) p.x = W + 20; if (p.x > W + 20) p.x = -20; if (p.y < -20) p.y = H + 20; if (p.y > H + 20) p.y = -20; arrow(p.x, p.y, p.r, p.s, p.red ? '#E8302F' : '#C9C8CE', p.a); });
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const p = parts[i]; p.x += p.vx; p.y += p.vy; p.vx *= .97; p.vy *= .97; p.r += p.vr; p.life -= .018;
+      if (p.life <= 0) { parts.splice(i, 1); continue; }
+      arrow(p.x, p.y, p.r, p.s, p.red ? '#E8302F' : '#EEEDEB', p.life * .75);
+    }
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

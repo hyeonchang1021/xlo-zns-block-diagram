@@ -4,6 +4,7 @@ XLO-ZNS(Encryption-Aware Zone Placement for Zoned Namespace SSDs) 논문의 시�
 
 - [시스템 블록도](https://hyeonchang1021.github.io/xlo-zns-block-diagram/): 블록이나 흐름 이름을 누르면 역할, 동작, 식, 핵심 수치가 나옵니다.
 - [논리 회로도](https://hyeonchang1021.github.io/xlo-zns-block-diagram/logic/): 배치별 결정 경로를 레지스터, 비교기, 게이트로 옮긴 계층형 회로도와, 이를 Verilog로 구현해 시뮬레이션·합성한 결과입니다.
+- [선행연구 수치 비교](https://hyeonchang1021.github.io/xlo-zns-block-diagram/benchmark/): XLO-ZNS 수치를 선행연구 16편의 헤드라인 수치와 나란히 놓은 9장짜리 웹 프레젠테이션입니다. 스크롤, 방향키, 스페이스로 넘깁니다.
 - [`rtl/`](rtl/): Verilog 구현(`xlo_place.v`), 테스트벤치, 검사기. 실행 방법은 `rtl/README.txt`에 있습니다.
 
 알아 둘 점
