@@ -6,6 +6,7 @@ XLO-ZNS(Encryption-Aware Zone Placement for Zoned Namespace SSDs) 논문의 시�
 - [논리 회로도](https://hyeonchang1021.github.io/xlo-zns-block-diagram/logic/): 배치별 결정 경로를 레지스터, 비교기, 게이트로 옮긴 계층형 회로도와, 이를 Verilog로 구현해 시뮬레이션·합성한 결과입니다.
 - [선행연구 수치 비교](https://hyeonchang1021.github.io/xlo-zns-block-diagram/benchmark/): XLO-ZNS 수치를 선행연구 16편의 헤드라인 수치와 나란히 놓은 9장짜리 웹 프레젠테이션입니다. 스크롤, 방향키, 스페이스로 넘깁니다.
 - [`rtl/`](rtl/): Verilog 구현(`xlo_place.v`), 테스트벤치, 검사기. 실행 방법은 `rtl/README.txt`에 있습니다.
+- [`sim/`](sim/): 이산 사건 시뮬레이터(`sim.py`)와 실행 스크립트, 409회 실행 결과. 논문 본문의 모델 설명만 보고 다시 구현한 것으로, 테넌트 퇴거·고정 할당 기준선·보완책 실험의 수치가 여기서 나옵니다. 실행 방법은 `sim/README.txt`에 있습니다.
 
 알아 둘 점
 
